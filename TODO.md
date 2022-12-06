@@ -14,6 +14,10 @@
 
   Should I create custom errors?  Probably, but I should also think about this
   some more.
+
+  Go [will support mutiple errors][go120] in the next release, Go 1.20.  For
+  now, I can use [go-xerrors](https://github.com/MDobak/go-xerrors) or I can
+  simply return `[]error` rather than a single error.
 + The `LoadClass` function should use this validation. That is, the
   `LoadClass` function can fail in multiple ways.  (1) The file may be
   unreadable, (2) the JSON may be invalid, and (3) the Class struct may be
@@ -24,3 +28,5 @@
 + Add methods that return emails, names, and numbers for a class.
 + Expand the `Student` struct so that it can store grades.
 + Add methods to the `Student` struct so that it can calculate grades.
+
+[go120]: https://github.com/golang/go/issues/53435#issuecomment-1191752789
