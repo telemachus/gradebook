@@ -1,6 +1,7 @@
 # TODO
 
 + Add validation for the Class struct.  This validation has several points.
+    + The `Categories` slice must not be empty.
     + Every value in the `Categories` slice must be a key in the
       `CategoriesPretty` map.
     + Every key in `CategoriesPretty` must be in the `Categories` slice.
