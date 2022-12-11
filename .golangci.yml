@@ -15,7 +15,8 @@ linters-settings:
       - yodaStyleExpr
   gomnd:
     ignored-numbers:
-      '0o644'
+      - '0o644'
+      - '100'
   govet:
     check-shadowing: true
   nolintlint:
