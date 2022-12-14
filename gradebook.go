@@ -1,3 +1,4 @@
+// Package gradebook is a library to read and write gradebook files.
 package gradebook
 
 import (
@@ -11,19 +12,19 @@ type Term struct {
 	End   string
 }
 
-// Terms stores information about divisions of the year.
+// Terms maps strings (e.g., "q1") to Term structs.
 type Terms map[string]*Term
 
 // Categories stores grading categories.
 type Categories []string
 
-// CategoriesPretty stores transformations from abbreviations to display names.
+// CategoriesPretty maps category names to a more readable representation.
 type CategoriesPretty map[string]string
 
-// CategoryWeights stores maps of type => percentage for grades.
-type CategoryWeights map[string]float64
+// CategoryWeights maps categories to their value in grading.
+type CategoryWeights map[string]int
 
-// TypesToCategories stores maps of type => category for grades.
+// TypesToCategories maps assignment types to categories for grading.
 type TypesToCategories map[string]string
 
 // Student stores information about students.
@@ -33,9 +34,13 @@ type Student struct {
 	// I will need a map here to store grades, right?
 }
 
-// Students stores student information.
+// Students maps emails to Student structs.
+//
+// Email is an appropriate equivalent to a database's primary key because
+// emails are unique.
 type Students map[string]*Student
 
+// Class stores information about the structure of a class and its students.
 type Class struct {
 	Name              string `json:"name"`
 	Terms             `json:"terms"`
@@ -46,6 +51,7 @@ type Class struct {
 	Students          `json:"students"`
 }
 
+// LoadClass unmarshals a class.json file into a pointer to Class.
 func LoadClass(classFile string) (*Class, error) {
 	data, err := os.ReadFile(classFile)
 	if err != nil {
