@@ -43,17 +43,19 @@ below for more details about both of these filetypes.)
   grading rubric, and students.  The terms can be overlapping: for example,
   four quarters and two semesters.  The grading categories are distributed in
   four subsections. First, the categories section is a list of brief names of
-  the broadest kinds of graded assignment.  Second, the `categories_pretty`
+  the broadest kinds of graded assignment.  Second, the `pretty_categories`
   section maps the items from `categories` to a more readable explanation of
-  the category.  Third, the `category_weights` section lists what percentage
-  of the final grade each category has.  In addition, there must be
-  a `types_to_categories` map of types of graded item to categories.  (Note
-  that `categories_pretty` and `category_weights` cannot include any key that
-  is not present in `categories`.  In addition, `types_to_categories` cannot
-  use any value expect those in `categories`.)  Finally, the `students`
-  section is a map of student emails with information about students' first
-  and last names.  (Since emails must be unique these work well as a kind of
-  primary key.)
+  the category.  (This section was previously labeled `categories_pretty`.)
+  Third, the `weights` section lists what percentage of the final grade each
+  category has.  (This section was previously labeled `category_weights`.)  In
+  addition, there must be a `subcategories` map of types of graded item to
+  categories.  (This section was previously labeled `types_to_categories`.)
++ Note that `pretty_categories` and `weights` cannot include any key that is
+  not present in `categories`.  In addition, `subcategories` cannot use any
+  value expect those in `categories`.  Finally, the `students` section is
+  a map of student emails with information about students' first and last
+  names. (Since emails must be unique these work well as a kind of primary
+  key.)
 + `class.json` files are a subset of `JSON` with the following format:
 
 ```json
@@ -70,20 +72,21 @@ below for more details about both of these filetypes.)
 		}
 	},
 	"categories": [ "CATEGORY1", "CATEGORY2", "ETC." ],
-	"categories_pretty": {
-		"CATEGORY1": "Some human-readable explanation of Category1",
-		"CATEGORY2": "Some human-readable explanation of Category2"
+	"pretty_categories": {
+		"CATEGORY1": "Some human-readable representation of CATEGORY1",
+		"CATEGORY2": "Some human-readable representation of CATEGORY2"
 	},
-	"category_weights": {
+	"weights": {
 		"CATEGORY1": 50,
 		"CATEGORY2": 50
 	},
-	"types_to_categories": {
-		"test": "CATEGORY1",
-		"essay": "CATEGORY1",
-		"quiz": "CATEGORY1",
-		"hw": "CATEGORY2",
-		"cp": "CATEGORY2"
+	"subcategories": {
+		"SUBCATEGORY1": "CATEGORY1",
+		"SUBCATEGORY2": "CATEGORY1",
+		"SUBCATEGORY3": "CATEGORY1",
+		"SUBCATEGORY4": "CATEGORY2",
+		"SUBCATEGORY5": "CATEGORY2"
+                "SUBCATEGORY6": "CATEGORY3"
 	},
 	"students": {
 		"somestudent@school.edu": {

@@ -7,47 +7,49 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-var identicalJSON = "testdata/identical.json"
-var differentJSON = "testdata/different.json"
-var invalidJSON = "testdata/invalid.json"
+var (
+	identicalJSON = "testdata/identical.json"
+	differentJSON = "testdata/different.json"
+	invalidJSON   = "testdata/invalid.json"
+)
 
-func TestLoadClassIdenticalValid(t *testing.T) {
+func TestUnmarshalClassIdenticalValid(t *testing.T) {
 	t.Parallel()
 
-	expected := testClass()
-	actual, err := gradebook.LoadClass(identicalJSON)
+	want := testClass()
 
+	got, err := gradebook.UnmarshalClass(identicalJSON)
 	if err != nil {
-		t.Fatalf("expected nil error; actual %v", err)
+		t.Fatalf("gradebook.UnmarshalClass(identicalJSON) = %v; want nil error", err)
 	}
 
-	if !cmp.Equal(expected, actual) {
-		t.Error(cmp.Diff(expected, actual))
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("gradebook.UnmarshalClass(identicalJSON) mismatch(-want +got):\n%s", diff)
 	}
 }
 
-func TestLoadClassDifferentValid(t *testing.T) {
+func TestUnmarshalClassDifferentValid(t *testing.T) {
 	t.Parallel()
 
-	expected := testClass()
-	actual, err := gradebook.LoadClass(differentJSON)
+	want := testClass()
 
+	got, err := gradebook.UnmarshalClass(differentJSON)
 	if err != nil {
-		t.Fatalf("expected nil error; actual %v", err)
+		t.Fatalf("gradebook.UnmarshalClass(differentJSON) = %v; want nil error", err)
 	}
 
-	if cmp.Equal(expected, actual) {
-		t.Error("expected different classes; actual identical classes")
+	if cmp.Equal(want, got) {
+		t.Error("gradebook.UnmarshalClass(differentJSON) should differ from the mock class, but it does not")
 	}
 }
 
-func TestLoadClassInvalid(t *testing.T) {
+func TestUnmarshalClassInvalid(t *testing.T) {
 	t.Parallel()
 
-	_, err := gradebook.LoadClass(invalidJSON)
+	_, err := gradebook.UnmarshalClass(invalidJSON)
 
 	if err == nil {
-		t.Fatal("expected error; actual nil")
+		t.Fatal("want error; got nil")
 	}
 }
 
@@ -81,17 +83,17 @@ func testClass() *gradebook.Class {
 			},
 		},
 		Categories: gradebook.Categories{"major", "minor", "cp"},
-		CategoriesPretty: gradebook.CategoriesPretty{
+		PrettyCategories: gradebook.PrettyCategories{
 			"major": "Major assessments",
 			"minor": "Daily work and quizzes",
 			"cp":    "Class participation",
 		},
-		CategoryWeights: gradebook.CategoryWeights{
+		Weights: gradebook.Weights{
 			"major": 30,
 			"minor": 40,
 			"cp":    30,
 		},
-		TypesToCategories: gradebook.TypesToCategories{
+		Subcategories: gradebook.Subcategories{
 			"test":    "major",
 			"project": "major",
 			"essay":   "major",

@@ -27,17 +27,17 @@
 		}
 	},
 	"categories": [ "major", "minor", "cp" ],
-	"categories_pretty": {
+	"pretty_categories": {
 		"major": "Major assessments",
 		"minor": "Daily work and quizzes",
 		"cp": "Class participation"
 	},
-	"category_weights": {
+	"weights": {
 		"major": 30,
 		"minor": 40,
 		"cp": 30
 	},
-	"types_to_categories": {
+	"subcategories": {
 		"test": "major",
 		"project": "major",
 		"essay": "major",

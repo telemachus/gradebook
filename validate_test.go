@@ -1,89 +1,59 @@
 package gradebook_test
 
 import (
-	"errors"
 	"gradebook"
 	"testing"
 )
 
-func TestZeroValueFieldsGoodClass(t *testing.T) {
+func TestValid(t *testing.T) {
 	t.Parallel()
 
 	class := testClass()
-	if err := class.ZeroValueFields(); err != nil {
-		t.Fatalf("want no error for good class; got %s\n", err)
+	if err := class.Validate(); err != nil {
+		t.Errorf("class.ZeroValues() = %v; want no error", err)
 	}
 }
 
-func TestZeroValueFieldsBadClasses(t *testing.T) {
+func TestInitializationInvalid(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
-		want           int
 	}{
-		"missing Name": {
+		"class.Name unset": {
 			transformClass: func(c *gradebook.Class) {
 				c.Name = ""
 			},
-			want: 1,
 		},
-		"missing Name and Terms": {
+		"class.Terms unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Name = ""
 				c.Terms = nil
 			},
-			want: 2,
 		},
-		"missing Name, Terms, and Categories": {
+		"class.Categories unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Name = ""
-				c.Terms = nil
 				c.Categories = nil
 			},
-			want: 3,
 		},
-		"missing Name, Terms, Categories, and CategoriesPretty": {
+		"class.PrettyCategories unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Name = ""
-				c.Terms = nil
-				c.Categories = nil
-				c.CategoriesPretty = nil
+				c.PrettyCategories = nil
 			},
-			want: 4,
 		},
-		"missing Name, Terms, Categories, CategoriesPretty, and CategoryWeights": {
+		"class.Weights unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Name = ""
-				c.Terms = nil
-				c.Categories = nil
-				c.CategoriesPretty = nil
-				c.CategoryWeights = nil
+				c.Weights = nil
 			},
-			want: 5,
 		},
-		"missing Name, Terms, Categories, CategoriesPretty, CategoryWeights, and TypesToCategories": {
+		"class.Subcategories unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Name = ""
-				c.Terms = nil
-				c.Categories = nil
-				c.CategoriesPretty = nil
-				c.CategoryWeights = nil
-				c.TypesToCategories = nil
+				c.Subcategories = nil
 			},
-			want: 6,
 		},
-		"missing Name, Terms, Categories, CategoriesPretty, CategoryWeights, TypesToCategories, and Students": {
+		"class.Students unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Name = ""
-				c.Terms = nil
-				c.Categories = nil
-				c.CategoriesPretty = nil
-				c.CategoryWeights = nil
-				c.TypesToCategories = nil
 				c.Students = nil
 			},
-			want: 7,
 		},
 	}
 
@@ -92,58 +62,43 @@ func TestZeroValueFieldsBadClasses(t *testing.T) {
 
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
+
 			class := testClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
-			err := class.ZeroValueFields()
 
-			var zverr *gradebook.ZeroValueError
-
-			if err == nil {
-				t.Fatal("expected error, got nil")
-			}
-
-			if errors.As(err, &zverr) && tc.want != len(zverr.Fields) {
-				t.Errorf("expected %d, got %d\n", tc.want, len(zverr.Fields))
+			if err := class.Validate(); err == nil {
+				t.Error("c.Validate() returns nil; want error for zero value(s)")
 			}
 		})
 	}
 }
 
-func TestSumCategoryWeightsGoodClass(t *testing.T) {
-	t.Parallel()
-
-	class := testClass()
-	if err := class.SumCategoryWeights(); err != nil {
-		t.Fatalf("want no error for good class; got %s\n", err)
-	}
-}
-
-func TestSumCategoryWeightsBadClasses(t *testing.T) {
+func TestWeightsSumInvalid(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
-		"no weights": {
+		"no Weights": {
 			transformClass: func(c *gradebook.Class) {
-				c.CategoryWeights = gradebook.CategoryWeights{}
+				c.Weights = gradebook.Weights{}
 			},
 		},
-		"weights under 100": {
+		"Weights under 100": {
 			transformClass: func(c *gradebook.Class) {
-				c.CategoryWeights["major"] = 25
+				c.Weights["major"] = 25
 			},
 		},
-		"weights over 100": {
+		"Weights over 100": {
 			transformClass: func(c *gradebook.Class) {
-				c.CategoryWeights["major"] = 75
+				c.Weights["major"] = 75
 			},
 		},
-		"weights below 0": {
+		"Weights below 0": {
 			transformClass: func(c *gradebook.Class) {
-				c.CategoryWeights["major"] = -175
+				c.Weights["major"] = -175
 			},
 		},
 	}
@@ -153,77 +108,81 @@ func TestSumCategoryWeightsBadClasses(t *testing.T) {
 
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
+
 			class := testClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
 
-			if err := class.SumCategoryWeights(); err == nil {
-				t.Error("expected error, got nil")
+			if err := class.Validate(); err == nil {
+				t.Error("class.Validate() returns nil; want error for incorrect Weights")
 			}
 		})
 	}
 }
 
-func TestConsistencyGoodClass(t *testing.T) {
-	t.Parallel()
-
-	class := testClass()
-	if err := class.Consistency(); err != nil {
-		t.Fatalf("want no error for good class; got %s\n", err)
-	}
-}
-
-func TestConsistencyBadClasses(t *testing.T) {
+func TestSetEqualityInvalid(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
-		"missing item from CategoriesPretty": {
+		"missing items from Categories": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.CategoriesPretty, "major")
+				clear(c.Categories)
 			},
 		},
-		"extra item in CategoriesPretty": {
+		"extra item in Categories": {
 			transformClass: func(c *gradebook.Class) {
-				c.CategoriesPretty["random"] = "Random Item"
+				c.Categories = append(c.Categories, "random")
 			},
 		},
-		"missing item from TypesToCategories": {
+		"missing item from Subcategories": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.TypesToCategories, "cp")
+				delete(c.Subcategories, "cp")
 			},
 		},
-		"extra item in TypesToCategories": {
+		"extra item in Subcategories": {
 			transformClass: func(c *gradebook.Class) {
-				c.TypesToCategories["random"] = "random"
+				c.Subcategories["random"] = "random"
 			},
 		},
-		"missing item from CategoryWeights": {
+		"missing item from PrettyCategories": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.CategoryWeights, "cp")
+				delete(c.PrettyCategories, "major")
 			},
 		},
-		"extra item in CategoryWeights": {
+		"extra item in PrettyCategories": {
 			transformClass: func(c *gradebook.Class) {
-				c.CategoryWeights["random"] = 0
+				c.PrettyCategories["random"] = "Random Item"
+			},
+		},
+		"missing item from Weights": {
+			transformClass: func(c *gradebook.Class) {
+				delete(c.Weights, "cp")
+			},
+		},
+		"extra item in Weights": {
+			transformClass: func(c *gradebook.Class) {
+				c.Weights["random"] = 0
 			},
 		},
 	}
 
 	for msg, tc := range testCases {
+		msg := msg
 		tc := tc
 
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
+
 			class := testClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
 
-			if err := class.Consistency(); err == nil {
-				t.Error("expected error, got nil")
+			if err := class.Validate(); err == nil {
+				t.Errorf("class.Validate() returns nil; want error for %s", msg)
 			}
 		})
 	}
