@@ -3,11 +3,20 @@ package gradebook
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
+	"unicode/utf8"
 )
 
-// Term stores dates for the start and end of a term.
+const (
+	gradebookSuffix = ".gradebook"
+	dateFmtLen      = len("YYYYMMDD")
+)
+
+// Term represents a grading period (e.g., a quarter or semester).
 type Term struct {
 	Start string
 	End   string
@@ -21,8 +30,8 @@ type Terms map[string]*Term
 type Categories []string
 
 // PrettyCategories associates items in Categories with a form ready for
-// display. E.g., the category "cp" points to "Class Participation", and
-// "major" points to "Major Assessments".
+// display. E.g., the category "cp" can display as "Class Participation", and
+// "major" can display as "Major Assessments".
 type PrettyCategories map[string]string
 
 // Weights associates items in Categories with their (percentage) value in
@@ -39,16 +48,24 @@ type Weights map[string]int
 // have the same name. E.g., "cp" is a subcategory of "cp".
 type Subcategories map[string]string
 
-// Grade represents a student's single grade
+// Grade represents a single grade
 type Grade struct {
 	Email string
-	Score *float64
+	Grade *float64
 }
 
-// Grades stores a group of Grade structs.
-type Grades []Grade
+// Grades stores Grade structs.
+type Grades []*Grade
 
-// Student stores information about students.
+// Gradebook represents a gradebook file.
+type Gradebook struct {
+	AssignmentDate        string `json:"assignment_date"`
+	AssignmentCategory    string `json:"assignment_category"`
+	AssignmentSubcategory string `json:"assignment_subcategory"`
+	Grades                `json:"assignment_grades"`
+}
+
+// Student represents a student.
 type Student struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -60,7 +77,7 @@ type Student struct {
 // unique.)
 type Students map[string]*Student
 
-// Class stores information about the structure of a class and its students.
+// Class represents a class and its students.
 type Class struct {
 	Name             string `json:"name"`
 	Terms            `json:"terms"`
@@ -71,24 +88,46 @@ type Class struct {
 	Students         `json:"students"`
 }
 
-// Gradebook stores information about a single gradebook file.
-type Gradebook struct {
-	Grades `json:"assignment_grades"`
-}
-
 // UnmarshalClass unmarshals a class.json file into a pointer to Class.
 func UnmarshalClass(classFile string) (*Class, error) {
 	data, err := os.ReadFile(filepath.Clean(classFile))
 	if err != nil {
 		return nil, err
 	}
-
 	var class Class
 	err = json.Unmarshal(data, &class)
-
 	if err != nil {
 		return nil, err
 	}
-
 	return &class, nil
+}
+
+// UnmarshalGradebook unmarshals a gradebook file into a pointer to Gradebook.
+func UnmarshalGradebook(gradebookFile string) (*Gradebook, error) {
+	data, err := os.ReadFile(filepath.Clean(gradebookFile))
+	if err != nil {
+		return nil, err
+	}
+	var gradebook Gradebook
+	err = json.Unmarshal(data, &gradebook)
+	if err != nil {
+		return nil, err
+	}
+	return &gradebook, nil
+}
+
+// dateSnip gets the date string from the end of a gradebook filename. If the
+// function does not find a valid date (in YYYYMMDD format), then it return an
+// error.
+func dateSnip(dateStr string) (string, error) {
+	dateStr = strings.TrimSuffix(dateStr, gradebookSuffix)
+	dateStrLen := utf8.RuneCountInString(dateStr)
+	if dateStrLen < dateFmtLen {
+		return "", fmt.Errorf("[%s] does not contain a valid YYYYMMDD date", dateStr)
+	}
+	dateStr = dateStr[dateStrLen-dateFmtLen:]
+	if _, err := time.Parse("20060102", dateStr); err != nil {
+		return "", fmt.Errorf("[%s] does not contain a valid YYYYMMDD date", dateStr)
+	}
+	return dateStr, nil
 }

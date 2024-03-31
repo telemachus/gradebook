@@ -1,14 +1,15 @@
-package gradebook
+// Package set provides a minimal ADT and operations for sets.
+package set
 
 import (
 	"fmt"
 	"strings"
 )
 
-type set[E comparable] map[E]struct{}
+type Set[E comparable] map[E]struct{}
 
-func newSet[E comparable](elems ...E) set[E] {
-	s := make(set[E], len(elems))
+func New[E comparable](elems ...E) Set[E] {
+	s := make(Set[E], len(elems))
 	for _, el := range elems {
 		s[el] = struct{}{}
 	}
@@ -16,7 +17,7 @@ func newSet[E comparable](elems ...E) set[E] {
 	return s
 }
 
-func (s set[E]) equals(other set[E]) bool {
+func (s Set[E]) Equals(other Set[E]) bool {
 	if len(s) != len(other) {
 		return false
 	}
@@ -31,7 +32,7 @@ func (s set[E]) equals(other set[E]) bool {
 	return true
 }
 
-func (s set[E]) String() string {
+func (s Set[E]) String() string {
 	elems := make([]string, 0, len(s))
 	for el := range s {
 		elems = append(elems, fmt.Sprintf("%v", el))

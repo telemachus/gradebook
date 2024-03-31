@@ -17,10 +17,10 @@ install: build
 	go install .
 
 test:
-	go test -shuffle on .
+	go test -shuffle on ./...
 
 testv:
-	go test -shuffle on -v .
+	go test -shuffle on -v ./...
 
 clean:
 	go clean -i -r -cache

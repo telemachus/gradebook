@@ -7,8 +7,7 @@ import (
 
 func TestValid(t *testing.T) {
 	t.Parallel()
-
-	class := testClass()
+	class := fakeClass()
 	if err := class.Validate(); err != nil {
 		t.Errorf("class.ZeroValues() = %v; want no error", err)
 	}
@@ -16,7 +15,6 @@ func TestValid(t *testing.T) {
 
 func TestInitializationInvalid(t *testing.T) {
 	t.Parallel()
-
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
@@ -56,18 +54,14 @@ func TestInitializationInvalid(t *testing.T) {
 			},
 		},
 	}
-
 	for msg, tc := range testCases {
 		tc := tc
-
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
-
-			class := testClass()
+			class := fakeClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
-
 			if err := class.Validate(); err == nil {
 				t.Error("c.Validate() returns nil; want error for zero value(s)")
 			}
@@ -77,7 +71,6 @@ func TestInitializationInvalid(t *testing.T) {
 
 func TestWeightsSumInvalid(t *testing.T) {
 	t.Parallel()
-
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
@@ -102,18 +95,14 @@ func TestWeightsSumInvalid(t *testing.T) {
 			},
 		},
 	}
-
 	for msg, tc := range testCases {
 		tc := tc
-
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
-
-			class := testClass()
+			class := fakeClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
-
 			if err := class.Validate(); err == nil {
 				t.Error("class.Validate() returns nil; want error for incorrect Weights")
 			}
@@ -123,7 +112,6 @@ func TestWeightsSumInvalid(t *testing.T) {
 
 func TestSetEqualityInvalid(t *testing.T) {
 	t.Parallel()
-
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
@@ -168,19 +156,15 @@ func TestSetEqualityInvalid(t *testing.T) {
 			},
 		},
 	}
-
 	for msg, tc := range testCases {
 		msg := msg
 		tc := tc
-
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
-
-			class := testClass()
+			class := fakeClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
-
 			if err := class.Validate(); err == nil {
 				t.Errorf("class.Validate() returns nil; want error for %s", msg)
 			}

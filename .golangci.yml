@@ -35,8 +35,6 @@ linters-settings:
       - opinionated
       - performance
       - style
-  govet:
-    check-shadowing: true
   nolintlint:
     require-explanation: true
     require-specific: true
@@ -58,11 +56,11 @@ linters:
     - goimports
     - gosec
     - gosimple
-    - govet
     - ineffassign
     - misspell
     - nolintlint
     - nakedret
+    - paralleltest
     - prealloc
     - predeclared
     - staticcheck
@@ -74,7 +72,6 @@ linters:
     - unparam
     - unused
     - whitespace
-    - wsl
 
 issues:
   exclude-use-default: false

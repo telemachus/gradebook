@@ -8,52 +8,47 @@ import (
 )
 
 var (
-	identicalJSON = "testdata/identical.json"
-	differentJSON = "testdata/different.json"
-	invalidJSON   = "testdata/invalid.json"
+	classJSON            = "testdata/class.json"
+	classUnequalJSON     = "testdata/wrong.json"
+	classInvalidJSON     = "testdata/invalid.json"
+	gradebookJSON        = "testdata/quiz-golden-20240319.gradebook"
+	gradebookUnequalJSON = "testdata/quiz-wrong-20240319.gradebook"
+	gradebookInvalidJSON = "testdata/quiz-invalid-20240319.gradebook"
 )
 
-func TestUnmarshalClassIdenticalValid(t *testing.T) {
+func TestUnmarshalClass(t *testing.T) {
 	t.Parallel()
-
-	want := testClass()
-
-	got, err := gradebook.UnmarshalClass(identicalJSON)
+	want := fakeClass()
+	got, err := gradebook.UnmarshalClass(classJSON)
 	if err != nil {
-		t.Fatalf("gradebook.UnmarshalClass(identicalJSON) = %v; want nil error", err)
+		t.Fatalf("gradebook.UnmarshalClass(classJSON) = %v; want nil error", err)
 	}
-
 	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("gradebook.UnmarshalClass(identicalJSON) mismatch(-want +got):\n%s", diff)
+		t.Errorf("gradebook.UnmarshalClass(classJSON) mismatch(-want +got):\n%s", diff)
 	}
 }
 
-func TestUnmarshalClassDifferentValid(t *testing.T) {
+func TestUnmarshalClassUnequal(t *testing.T) {
 	t.Parallel()
-
-	want := testClass()
-
-	got, err := gradebook.UnmarshalClass(differentJSON)
+	want := fakeClass()
+	got, err := gradebook.UnmarshalClass(classUnequalJSON)
 	if err != nil {
-		t.Fatalf("gradebook.UnmarshalClass(differentJSON) = %v; want nil error", err)
+		t.Fatalf("gradebook.UnmarshalClass(classUnequalJSON) = %v; want nil error", err)
 	}
-
 	if cmp.Equal(want, got) {
-		t.Error("gradebook.UnmarshalClass(differentJSON) should differ from the mock class, but it does not")
+		t.Error("gradebook.UnmarshalClass(classUnequalJSON) should differ from the mock class, but it does not")
 	}
 }
 
 func TestUnmarshalClassInvalid(t *testing.T) {
 	t.Parallel()
-
-	_, err := gradebook.UnmarshalClass(invalidJSON)
-
+	_, err := gradebook.UnmarshalClass(classInvalidJSON)
 	if err == nil {
 		t.Fatal("want error; got nil")
 	}
 }
 
-func testClass() *gradebook.Class {
+func fakeClass() *gradebook.Class {
 	return &gradebook.Class{
 		Name: "Lucretius",
 		Terms: map[string]*gradebook.Term{
@@ -102,26 +97,91 @@ func testClass() *gradebook.Class {
 			"cp":      "cp",
 		},
 		Students: gradebook.Students{
-			"gstriker@school.edu": {
+			"gstriker@school.edu": &gradebook.Student{
 				FirstName: "Gisela",
 				LastName:  "Striker",
 			},
-			"mfrede@school.edu": {
+			"mfrede@school.edu": &gradebook.Student{
 				FirstName: "Michael",
 				LastName:  "Frede",
 			},
-			"jannas@school.edu": {
+			"jannas@school.edu": &gradebook.Student{
 				FirstName: "Julia",
 				LastName:  "Annas",
 			},
-			"agomezlobo@school.edu": {
+			"agomezlobo@school.edu": &gradebook.Student{
 				FirstName: "Alfonso",
 				LastName:  "Gómez-Lobo",
 			},
-			"gfine@school.edu": {
+			"gfine@school.edu": &gradebook.Student{
 				FirstName: "Gail",
 				LastName:  "Fine",
 			},
 		},
 	}
+}
+
+func TestUnmarshalGradebook(t *testing.T) {
+	t.Parallel()
+	want := fakeGradebook()
+	got, err := gradebook.UnmarshalGradebook(gradebookJSON)
+	if err != nil {
+		t.Fatalf("gradebook.UnmarshalGradebook(gradebookJSON) = %v; want nil error", err)
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("gradebook.UnmarshalGradebook(gradebookJSON) mismatch(-want +got):\n%s", diff)
+	}
+}
+
+func TestUnmarshalGradebookUnequal(t *testing.T) {
+	t.Parallel()
+	want := fakeGradebook()
+	got, err := gradebook.UnmarshalGradebook(gradebookUnequalJSON)
+	if err != nil {
+		t.Fatalf("gradebook.UnmarshalGradebook(gradebookUnequalJSON) = %v; want nil error", err)
+	}
+	if cmp.Equal(want, got) {
+		t.Error("gradebook.UnmarshalGradebook(gradebookUnequalJSON) should differ from the mock class, but it does not")
+	}
+}
+
+func TestUnmarshalGradebookInvalid(t *testing.T) {
+	t.Parallel()
+	_, err := gradebook.UnmarshalGradebook(gradebookInvalidJSON)
+	if err == nil {
+		t.Fatal("want error; got nil")
+	}
+}
+
+func fakeGradebook() *gradebook.Gradebook {
+	return &gradebook.Gradebook{
+		AssignmentDate:        "20240319",
+		AssignmentCategory:    "minor",
+		AssignmentSubcategory: "quiz",
+		Grades: gradebook.Grades{
+			&gradebook.Grade{
+				Email: "gstriker@school.edu",
+				Grade: floatPtr(94.2),
+			},
+			&gradebook.Grade{
+				Email: "mfrede@school.edu",
+				Grade: floatPtr(94.0),
+			},
+			&gradebook.Grade{
+				Email: "jannas@school.edu",
+				Grade: floatPtr(104),
+			},
+			&gradebook.Grade{
+				Email: "agomezlobo@school.edu",
+				Grade: floatPtr(81),
+			},
+			&gradebook.Grade{
+				Email: "gfine@school.edu",
+			},
+		},
+	}
+}
+
+func floatPtr(n float64) *float64 {
+	return &n
 }
