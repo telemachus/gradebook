@@ -69,7 +69,7 @@ type Gradebook struct {
 type Student struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	// I will need a map of some kind here to store grades.
+	Grades    map[string][]*float64
 }
 
 // Students associates emails with Student structs. (NB: an email is an
