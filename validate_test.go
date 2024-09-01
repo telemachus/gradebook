@@ -55,7 +55,6 @@ func TestInitializationInvalid(t *testing.T) {
 		},
 	}
 	for msg, tc := range testCases {
-		tc := tc
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 			class := fakeClass()
@@ -96,7 +95,6 @@ func TestWeightsSumInvalid(t *testing.T) {
 		},
 	}
 	for msg, tc := range testCases {
-		tc := tc
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 			class := fakeClass()
@@ -157,8 +155,6 @@ func TestSetEqualityInvalid(t *testing.T) {
 		},
 	}
 	for msg, tc := range testCases {
-		msg := msg
-		tc := tc
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 			class := fakeClass()
