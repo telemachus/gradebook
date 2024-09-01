@@ -1,13 +1,10 @@
-.DEFAULT_GOAL := lint
+.DEFAULT_GOAL := test
 
 fmt:
 	golangci-lint run --disable-all --no-config -Egofmt --fix
 	golangci-lint run --disable-all --no-config -Egofumpt --fix
 
-vet: fmt
-	go vet .
-
-lint: vet
+lint: fmt
 	golangci-lint run
 
 build: lint
@@ -17,12 +14,12 @@ install: build
 	go install .
 
 test:
-	go test -shuffle on ./...
+	go test -shuffle on .
 
 testv:
-	go test -shuffle on -v ./...
+	go test -shuffle on -v .
 
-clean:
-	go clean -i -r -cache
+bench:
+	go test -bench=. -benchmem -benchtime=5s -count=3 -run=NONE
 
-.PHONY: fmt vet lint build install test testv clean
+.PHONY: fmt lint build install test testv bench
