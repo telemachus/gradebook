@@ -8,8 +8,8 @@ import (
 func TestTermIncludesValid(t *testing.T) {
 	t.Parallel()
 	testCases := map[string]struct {
-		dateStr string
 		term    *gradebook.Term
+		dateStr string
 		want    bool
 	}{
 		"term should include start date": {

@@ -50,8 +50,8 @@ type Subcategories map[string]string
 
 // Grade represents a single grade
 type Grade struct {
-	Email string
 	Grade *float64
+	Email string
 }
 
 // Grades stores Grade structs.
@@ -67,9 +67,9 @@ type Gradebook struct {
 
 // Student represents a student.
 type Student struct {
+	Grades    map[string][]*float64
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Grades    map[string][]*float64
 }
 
 // Students associates emails with Student structs. (NB: an email is an
@@ -79,13 +79,13 @@ type Students map[string]*Student
 
 // Class represents a class and its students.
 type Class struct {
-	Name             string `json:"name"`
 	Terms            `json:"terms"`
-	Categories       `json:"categories"`
 	PrettyCategories `json:"pretty_categories"`
 	Weights          `json:"weights"`
 	Subcategories    `json:"subcategories"`
 	Students         `json:"students"`
+	Name             string `json:"name"`
+	Categories       `json:"categories"`
 }
 
 // UnmarshalClass unmarshals a class.json file into a pointer to Class.
