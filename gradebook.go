@@ -85,7 +85,6 @@ func UnmarshalClass(classFile string) (*Class, error) {
 
 	var class Class
 	err = json.Unmarshal(data, &class)
-
 	if err != nil {
 		return nil, err
 	}

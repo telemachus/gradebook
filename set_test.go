@@ -45,8 +45,6 @@ func TestSetEquals(t *testing.T) {
 	}
 
 	for msg, tt := range tests {
-		tt := tt
-
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 
@@ -76,8 +74,6 @@ func TestSetString(t *testing.T) {
 	}
 
 	for msg, tt := range tests {
-		tt := tt
-
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 

@@ -36,7 +36,7 @@ linters-settings:
       - performance
       - style
   govet:
-    check-shadowing: true
+    shadow: true
   nolintlint:
     require-explanation: true
     require-specific: true
@@ -45,12 +45,12 @@ linters:
   disable-all: true
   enable:
     - bodyclose
+    - copyloopvar
     - cyclop
     - depguard
     - dogsled
     - dupl
     - errcheck
-    - exportloopref
     - exhaustive
     - goconst
     - gocritic
@@ -74,7 +74,6 @@ linters:
     - unparam
     - unused
     - whitespace
-    - wsl
 
 issues:
   exclude-use-default: false
