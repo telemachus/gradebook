@@ -18,11 +18,13 @@ var (
 
 func TestUnmarshalClass(t *testing.T) {
 	t.Parallel()
+
 	want := fakeClass()
 	got, err := gradebook.UnmarshalClass(classJSON)
 	if err != nil {
 		t.Fatalf("gradebook.UnmarshalClass(classJSON) = %v; want nil error", err)
 	}
+
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("gradebook.UnmarshalClass(classJSON) mismatch(-want +got):\n%s", diff)
 	}
@@ -30,11 +32,13 @@ func TestUnmarshalClass(t *testing.T) {
 
 func TestUnmarshalClassUnequal(t *testing.T) {
 	t.Parallel()
+
 	want := fakeClass()
 	got, err := gradebook.UnmarshalClass(classUnequalJSON)
 	if err != nil {
 		t.Fatalf("gradebook.UnmarshalClass(classUnequalJSON) = %v; want nil error", err)
 	}
+
 	if cmp.Equal(want, got) {
 		t.Error("gradebook.UnmarshalClass(classUnequalJSON) should differ from the mock class, but it does not")
 	}
@@ -42,6 +46,7 @@ func TestUnmarshalClassUnequal(t *testing.T) {
 
 func TestUnmarshalClassInvalid(t *testing.T) {
 	t.Parallel()
+
 	_, err := gradebook.UnmarshalClass(classInvalidJSON)
 	if err == nil {
 		t.Fatal("want error; got nil")
@@ -123,11 +128,13 @@ func fakeClass() *gradebook.Class {
 
 func TestUnmarshalGradebook(t *testing.T) {
 	t.Parallel()
+
 	want := fakeGradebook()
 	got, err := gradebook.UnmarshalGradebook(gradebookJSON)
 	if err != nil {
 		t.Fatalf("gradebook.UnmarshalGradebook(gradebookJSON) = %v; want nil error", err)
 	}
+
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("gradebook.UnmarshalGradebook(gradebookJSON) mismatch(-want +got):\n%s", diff)
 	}
@@ -135,11 +142,13 @@ func TestUnmarshalGradebook(t *testing.T) {
 
 func TestUnmarshalGradebookUnequal(t *testing.T) {
 	t.Parallel()
+
 	want := fakeGradebook()
 	got, err := gradebook.UnmarshalGradebook(gradebookUnequalJSON)
 	if err != nil {
 		t.Fatalf("gradebook.UnmarshalGradebook(gradebookUnequalJSON) = %v; want nil error", err)
 	}
+
 	if cmp.Equal(want, got) {
 		t.Error("gradebook.UnmarshalGradebook(gradebookUnequalJSON) should differ from the mock class, but it does not")
 	}
@@ -147,6 +156,7 @@ func TestUnmarshalGradebookUnequal(t *testing.T) {
 
 func TestUnmarshalGradebookInvalid(t *testing.T) {
 	t.Parallel()
+
 	_, err := gradebook.UnmarshalGradebook(gradebookInvalidJSON)
 	if err == nil {
 		t.Fatal("want error; got nil")

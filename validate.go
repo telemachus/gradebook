@@ -16,16 +16,14 @@ func zvalErr(zvals []string) error {
 	case 1:
 		return fmt.Errorf("gradebook: a field in Class is unset: %s", zvals[0])
 	default:
-		return fmt.Errorf(
-			"gradebooks: fields in Class are unset: %s",
-			strings.Join(zvals, ", "),
-		)
+		return fmt.Errorf("gradebooks: fields in Class are unset: %s", strings.Join(zvals, ", "))
 	}
 }
 
 // checkInitialization ensures that a *Class has no dangerous zero values.
 func (c *Class) checkInitialization() error {
 	zvals := make([]string, 0, 7)
+
 	if c.Name == "" {
 		zvals = append(zvals, "Name")
 	}
@@ -47,6 +45,7 @@ func (c *Class) checkInitialization() error {
 	if c.Students == nil {
 		zvals = append(zvals, "Students")
 	}
+
 	return zvalErr(zvals)
 }
 
@@ -56,9 +55,11 @@ func (c *Class) checkWeightsSum() error {
 	for _, n := range c.Weights {
 		total += n
 	}
+
 	if total != 100 {
 		return errors.New("gradebook: Weights must equal 100%")
 	}
+
 	return nil
 }
 
@@ -67,6 +68,7 @@ func checkEq[T comparable](lhs, rhs set.Set[T]) error {
 	if !lhs.Equals(rhs) {
 		return fmt.Errorf("%s and %s are not equal sets", lhs, rhs)
 	}
+
 	return nil
 }
 
@@ -78,6 +80,7 @@ func (c *Class) Validate() error {
 	sSet := set.New(maps.Values(c.Subcategories)...)
 	wSet := set.New(maps.Keys(c.Weights)...)
 	pcSet := set.New(maps.Keys(c.PrettyCategories)...)
+
 	return errors.Join(
 		c.checkInitialization(),
 		c.checkWeightsSum(),

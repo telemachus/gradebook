@@ -94,11 +94,13 @@ func UnmarshalClass(classFile string) (*Class, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var class Class
 	err = json.Unmarshal(data, &class)
 	if err != nil {
 		return nil, err
 	}
+
 	return &class, nil
 }
 
@@ -108,11 +110,13 @@ func UnmarshalGradebook(gradebookFile string) (*Gradebook, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var gradebook Gradebook
 	err = json.Unmarshal(data, &gradebook)
 	if err != nil {
 		return nil, err
 	}
+
 	return &gradebook, nil
 }
 
@@ -125,9 +129,11 @@ func dateSnip(dateStr string) (string, error) {
 	if dateStrLen < dateFmtLen {
 		return "", fmt.Errorf("[%s] does not contain a valid YYYYMMDD date", dateStr)
 	}
+
 	dateStr = dateStr[dateStrLen-dateFmtLen:]
 	if _, err := time.Parse("20060102", dateStr); err != nil {
 		return "", fmt.Errorf("[%s] does not contain a valid YYYYMMDD date", dateStr)
 	}
+
 	return dateStr, nil
 }

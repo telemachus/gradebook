@@ -4,8 +4,16 @@ fmt:
 	golangci-lint run --disable-all --no-config -Egofmt --fix
 	golangci-lint run --disable-all --no-config -Egofumpt --fix
 
-lint: fmt
+staticcheck: fmt
+	staticcheck ./...
+
+revive: fmt
+	revive -config revive.toml -exclude internal/flag ./...
+
+golangci: fmt
 	golangci-lint run
+
+lint: fmt staticcheck revive golangci
 
 build: lint
 	go build .

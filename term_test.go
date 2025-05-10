@@ -7,6 +7,7 @@ import (
 
 func TestTermIncludesValid(t *testing.T) {
 	t.Parallel()
+
 	testCases := map[string]struct {
 		term    *gradebook.Term
 		dateStr string
@@ -53,9 +54,11 @@ func TestTermIncludesValid(t *testing.T) {
 			want: false,
 		},
 	}
+
 	for msg, tc := range testCases {
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
+
 			got := tc.term.Includes(tc.dateStr)
 			if got != tc.want {
 				t.Errorf("%#v.Includes(%s) returns %t; want %t", tc.term, tc.dateStr, got, tc.want)

@@ -7,6 +7,7 @@ import (
 
 func TestNewStudentValid(t *testing.T) {
 	t.Parallel()
+
 	firstName := "First"
 	lastName := "Last"
 	_, err := gradebook.NewStudent(firstName, lastName)

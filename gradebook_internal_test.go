@@ -6,6 +6,7 @@ import (
 
 func TestDateSnipValid(t *testing.T) {
 	t.Parallel()
+
 	testCases := map[string]struct {
 		fileName string
 		want     string
@@ -23,13 +24,16 @@ func TestDateSnipValid(t *testing.T) {
 			want:     "20230213",
 		},
 	}
+
 	for msg, tc := range testCases {
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
+
 			got, err := dateSnip(tc.fileName)
 			if err != nil {
 				t.Fatalf("err should be nil; got %s", err)
 			}
+
 			if got != tc.want {
 				t.Errorf("dateSnip(%s) returns %s; want %s", tc.fileName, got, tc.want)
 			}
