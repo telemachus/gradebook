@@ -22,31 +22,30 @@ type Term struct {
 	End   string
 }
 
-// Terms associates Term structs with short labels (e.g., "q1" points to the
-// first quarter.
-type Terms map[string]*Term
+// TermsByID maps Terms by short ID (e.g., "q1" points to the first quarter).
+type TermsByID map[string]*Term
 
-// Categories stores grading categories.
-type Categories []string
+// AssignmentTypes stores basic assignment types.
+type AssignmentTypes []string
 
-// PrettyCategories associates items in Categories with a form ready for
-// display. E.g., the category "cp" can display as "Class Participation", and
-// "major" can display as "Major Assessments".
-type PrettyCategories map[string]string
+// LabelsByAssignmentType maps human-readable labels by a type of assignment.
+// E.g., the type "cp" has the label "Class Participation", and the type
+// "major" has the label "Major Assessments".
+type LabelsByAssignmentType map[string]string
 
-// Weights associates items in Categories with their (percentage) value in
-// a grading rubric. The sum of the weights must equal 100 in order for this
+// WeightsByAssignmentType maps percentage values in a grading rubric by
+// assignment type. The sum of the weights must equal 100 in order for this
 // type to be valid.
-type Weights map[string]int
+type WeightsByAssignmentType map[string]int
 
-// Subcategories associates subcategories with items in Categories. (E.g.,
-// "test", "essay", and "project" are all subcategories of the "major" grading
-// category.) Every subcategory must belong to one and only one category, and
-// every category must be present in Categories for this type to be valid.
-// Also, and this is less obvious, every category must have a subcategory. If
-// a category has only a single member, the subcategory and category will often
-// have the same name. E.g., "cp" is a subcategory of "cp".
-type Subcategories map[string]string
+// CategoriesByAssignmentType maps assignment categories by their basic type.
+// (E.g., "test", "essay", and "project" are all categories of the "major"
+// assignment type.) Every category must belong to one and only one type, and
+// every category must be present in CategoriesByAssignmentType. Also, and this
+// is less obvious, every assignment type must have a category. If a type has
+// only a single category, the category and type will often have the same name.
+// E.g., "cp" is the category of the "cp" assignment type.
+type CategoriesByAssignmentType map[string]string
 
 // Grade represents a single grade
 type Grade struct {
@@ -57,35 +56,35 @@ type Grade struct {
 // Grades stores Grade structs.
 type Grades []*Grade
 
-// Gradebook represents a gradebook file.
+// Gradebook represents a single gradebook file.
 type Gradebook struct {
-	AssignmentDate        string `json:"assignment_date"`
-	AssignmentCategory    string `json:"assignment_category"`
-	AssignmentSubcategory string `json:"assignment_subcategory"`
-	Grades                `json:"assignment_grades"`
+	AssignmentDate     string `json:"assignment_date"`
+	AssignmentType     string `json:"assignment_type"`
+	AssignmentCategory string `json:"assignment_category"`
+	Grades             `json:"assignment_grades"`
 }
 
 // Student represents a student.
 type Student struct {
-	Grades    map[string][]*float64
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	GradesByType map[string][]*float64
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
 }
 
-// Students associates emails with Student structs. (NB: an email is an
+// StudentsByEmail maps students by their email. (NB: an email is an
 // appropriate equivalent to a database's primary key because emails are
 // unique.)
-type Students map[string]*Student
+type StudentsByEmail map[string]*Student
 
 // Class represents a class and its students.
 type Class struct {
-	Terms            `json:"terms"`
-	PrettyCategories `json:"pretty_categories"`
-	Weights          `json:"weights"`
-	Subcategories    `json:"subcategories"`
-	Students         `json:"students"`
-	Name             string `json:"name"`
-	Categories       `json:"categories"`
+	TermsByID                  `json:"terms_by_id"`
+	LabelsByAssignmentType     `json:"labels_by_assignment_type"`
+	WeightsByAssignmentType    `json:"weights_by_assignment_type"`
+	CategoriesByAssignmentType `json:"categories_by_assignment_type"`
+	StudentsByEmail            `json:"students_by_email"`
+	Name                       string `json:"name"`
+	AssignmentTypes            `json:"assignment_types"`
 }
 
 // UnmarshalClass unmarshals a class.json file into a pointer to Class.

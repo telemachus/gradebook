@@ -27,23 +27,23 @@ func (c *Class) checkInitialization() error {
 	if c.Name == "" {
 		zvals = append(zvals, "Name")
 	}
-	if c.Terms == nil {
-		zvals = append(zvals, "Terms")
+	if c.TermsByID == nil {
+		zvals = append(zvals, "TermsByID")
 	}
-	if c.Categories == nil {
-		zvals = append(zvals, "Categories")
+	if c.AssignmentTypes == nil {
+		zvals = append(zvals, "AssignmentTypes")
 	}
-	if c.PrettyCategories == nil {
-		zvals = append(zvals, "PrettyCategories")
+	if c.LabelsByAssignmentType == nil {
+		zvals = append(zvals, "LabelsByAssignmentType")
 	}
-	if c.Weights == nil {
-		zvals = append(zvals, "Weights")
+	if c.WeightsByAssignmentType == nil {
+		zvals = append(zvals, "WeightsByAssignmentType")
 	}
-	if c.Subcategories == nil {
-		zvals = append(zvals, "Subcategories")
+	if c.CategoriesByAssignmentType == nil {
+		zvals = append(zvals, "CategoriesByAssignmentType")
 	}
-	if c.Students == nil {
-		zvals = append(zvals, "Students")
+	if c.StudentsByEmail == nil {
+		zvals = append(zvals, "StudentsByEmail")
 	}
 
 	return zvalErr(zvals)
@@ -52,12 +52,12 @@ func (c *Class) checkInitialization() error {
 // checkWeightsSum ensures that c.Weights adds up to 100%.
 func (c *Class) checkWeightsSum() error {
 	total := 0
-	for _, n := range c.Weights {
+	for _, n := range c.WeightsByAssignmentType {
 		total += n
 	}
 
 	if total != 100 {
-		return errors.New("gradebook: Weights must equal 100%")
+		return errors.New("gradebook: WeightsByAssignmentType must equal 100%")
 	}
 
 	return nil
@@ -76,16 +76,16 @@ func checkEq[T comparable](lhs, rhs set.Set[T]) error {
 // valid. Otherwise it returns an error containing one more errors from the
 // individual checks. Those errors are combined using errors.Join.
 func (c *Class) Validate() error {
-	cSet := set.New(c.Categories...)
-	sSet := set.New(maps.Values(c.Subcategories)...)
-	wSet := set.New(maps.Keys(c.Weights)...)
-	pcSet := set.New(maps.Keys(c.PrettyCategories)...)
+	assignmentsSet := set.New(c.AssignmentTypes...)
+	categoriesSet := set.New(maps.Values(c.CategoriesByAssignmentType)...)
+	weightsSet := set.New(maps.Keys(c.WeightsByAssignmentType)...)
+	labelsSet := set.New(maps.Keys(c.LabelsByAssignmentType)...)
 
 	return errors.Join(
 		c.checkInitialization(),
 		c.checkWeightsSum(),
-		checkEq(cSet, sSet),
-		checkEq(cSet, pcSet),
-		checkEq(cSet, wSet),
+		checkEq(assignmentsSet, categoriesSet),
+		checkEq(assignmentsSet, labelsSet),
+		checkEq(assignmentsSet, weightsSet),
 	)
 }

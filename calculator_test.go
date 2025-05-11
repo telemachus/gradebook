@@ -33,7 +33,7 @@ func fakeGradesMap() map[string][]*float64 {
 func fakeCalcClass() *gradebook.Class {
 	return &gradebook.Class{
 		Name: "Lucretius",
-		Terms: map[string]*gradebook.Term{
+		TermsByID: map[string]*gradebook.Term{
 			"q1": {
 				Start: "20200910",
 				End:   "20201103",
@@ -59,18 +59,18 @@ func fakeCalcClass() *gradebook.Class {
 				End:   "20210609",
 			},
 		},
-		Categories: gradebook.Categories{"major", "minor", "cp"},
-		PrettyCategories: gradebook.PrettyCategories{
+		AssignmentTypes: gradebook.AssignmentTypes{"major", "minor", "cp"},
+		LabelsByAssignmentType: gradebook.LabelsByAssignmentType{
 			"major": "Major assessments",
 			"minor": "Daily work and quizzes",
 			"cp":    "Class participation",
 		},
-		Weights: gradebook.Weights{
+		WeightsByAssignmentType: gradebook.WeightsByAssignmentType{
 			"major": 30,
 			"minor": 40,
 			"cp":    30,
 		},
-		Subcategories: gradebook.Subcategories{
+		CategoriesByAssignmentType: gradebook.CategoriesByAssignmentType{
 			"test":    "major",
 			"project": "major",
 			"essay":   "major",
@@ -78,31 +78,31 @@ func fakeCalcClass() *gradebook.Class {
 			"hw":      "minor",
 			"cp":      "cp",
 		},
-		Students: gradebook.Students{
+		StudentsByEmail: gradebook.StudentsByEmail{
 			"gstriker@school.edu": &gradebook.Student{
-				FirstName: "Gisela",
-				LastName:  "Striker",
-				Grades:    fakeGradesMap(),
+				FirstName:    "Gisela",
+				LastName:     "Striker",
+				GradesByType: fakeGradesMap(),
 			},
 			"mfrede@school.edu": &gradebook.Student{
-				FirstName: "Michael",
-				LastName:  "Frede",
-				Grades:    fakeGradesMap(),
+				FirstName:    "Michael",
+				LastName:     "Frede",
+				GradesByType: fakeGradesMap(),
 			},
 			"jannas@school.edu": &gradebook.Student{
-				FirstName: "Julia",
-				LastName:  "Annas",
-				Grades:    fakeGradesMap(),
+				FirstName:    "Julia",
+				LastName:     "Annas",
+				GradesByType: fakeGradesMap(),
 			},
 			"agomezlobo@school.edu": &gradebook.Student{
-				FirstName: "Alfonso",
-				LastName:  "Gómez-Lobo",
-				Grades:    fakeGradesMap(),
+				FirstName:    "Alfonso",
+				LastName:     "Gómez-Lobo",
+				GradesByType: fakeGradesMap(),
 			},
 			"gfine@school.edu": &gradebook.Student{
-				FirstName: "Gail",
-				LastName:  "Fine",
-				Grades:    fakeGradesMap(),
+				FirstName:    "Gail",
+				LastName:     "Fine",
+				GradesByType: fakeGradesMap(),
 			},
 		},
 	}

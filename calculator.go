@@ -21,15 +21,15 @@ func UnmarshalCalcClass(classFile string) (*Class, error) {
 		return nil, err
 	}
 
-	for name, student := range class.Students {
-		gradesByCategories := make(map[string][]*float64, len(class.Categories))
-		for _, cat := range class.Categories {
+	for name, student := range class.StudentsByEmail {
+		gradesByType := make(map[string][]*float64, len(class.AssignmentTypes))
+		for _, cat := range class.AssignmentTypes {
 			// TODO: how should I decide the capacity here?
-			gradesByCategories[cat] = make([]*float64, 0, 25)
+			gradesByType[cat] = make([]*float64, 0, 25)
 		}
 
-		student.Grades = gradesByCategories
-		class.Students[name] = student
+		student.GradesByType = gradesByType
+		class.StudentsByEmail[name] = student
 	}
 
 	return &class, nil

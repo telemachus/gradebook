@@ -25,34 +25,34 @@ func TestInitializationInvalid(t *testing.T) {
 				c.Name = ""
 			},
 		},
-		"class.Terms unset": {
+		"class.TermsByID unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Terms = nil
+				c.TermsByID = nil
 			},
 		},
-		"class.Categories unset": {
+		"class.AssignmentTypes unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Categories = nil
+				c.AssignmentTypes = nil
 			},
 		},
-		"class.PrettyCategories unset": {
+		"class.LabelsByAssignmentType unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.PrettyCategories = nil
+				c.LabelsByAssignmentType = nil
 			},
 		},
-		"class.Weights unset": {
+		"class.WeightsByAssignmentType unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights = nil
+				c.WeightsByAssignmentType = nil
 			},
 		},
-		"class.Subcategories unset": {
+		"class.CategoriesByAssignmentType unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Subcategories = nil
+				c.CategoriesByAssignmentType = nil
 			},
 		},
-		"class.Students unset": {
+		"class.StudentsByEmail unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Students = nil
+				c.StudentsByEmail = nil
 			},
 		},
 	}
@@ -79,24 +79,24 @@ func TestWeightsSumInvalid(t *testing.T) {
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
-		"no Weights": {
+		"no WeightsByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights = gradebook.Weights{}
+				c.WeightsByAssignmentType = gradebook.WeightsByAssignmentType{}
 			},
 		},
-		"Weights under 100": {
+		"WeightsByAssignmentType under 100": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["major"] = 25
+				c.WeightsByAssignmentType["major"] = 25
 			},
 		},
-		"Weights over 100": {
+		"WeightsByAssignmentType over 100": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["major"] = 75
+				c.WeightsByAssignmentType["major"] = 75
 			},
 		},
 		"Weights below 0": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["major"] = -175
+				c.WeightsByAssignmentType["major"] = -175
 			},
 		},
 	}
@@ -123,44 +123,44 @@ func TestSetEqualityInvalid(t *testing.T) {
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
-		"missing items from Categories": {
+		"missing items from AssignmentTypes": {
 			transformClass: func(c *gradebook.Class) {
-				clear(c.Categories)
+				clear(c.AssignmentTypes)
 			},
 		},
-		"extra item in Categories": {
+		"extra item in AssignmentTypes": {
 			transformClass: func(c *gradebook.Class) {
-				c.Categories = append(c.Categories, "random")
+				c.AssignmentTypes = append(c.AssignmentTypes, "random")
 			},
 		},
-		"missing item from Subcategories": {
+		"missing item from CategoriesByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.Subcategories, "cp")
+				delete(c.CategoriesByAssignmentType, "cp")
 			},
 		},
-		"extra item in Subcategories": {
+		"extra item in CategoriesByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				c.Subcategories["random"] = "random"
+				c.CategoriesByAssignmentType["random"] = "random"
 			},
 		},
-		"missing item from PrettyCategories": {
+		"missing item from LabelsByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.PrettyCategories, "major")
+				delete(c.LabelsByAssignmentType, "cp")
 			},
 		},
-		"extra item in PrettyCategories": {
+		"extra item in LabelsByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				c.PrettyCategories["random"] = "Random Item"
+				c.LabelsByAssignmentType["random"] = "Random Item"
 			},
 		},
-		"missing item from Weights": {
+		"missing item from WeightsByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.Weights, "cp")
+				delete(c.WeightsByAssignmentType, c.AssignmentTypes[0])
 			},
 		},
-		"extra item in Weights": {
+		"extra item in WeightsByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["random"] = 0
+				c.WeightsByAssignmentType["random"] = 0
 			},
 		},
 	}

@@ -1,8 +1,6 @@
 {
+    "assignment_category": "quiz",
     "assignment_date": "20240319",
-    "assignment_name": "golden",
-    "assignment_subcategory": "quiz",
-    "assignment_category": "minor",
     "assignment_grades": [
         {
             "email": "gstriker@school.edu",
@@ -24,5 +22,7 @@
             "email": "gfine@school.edu",
             "grade": null
         }
-    ]
+    ],
+    "assignment_name": "golden",
+    "assignment_type": "minor"
 }

@@ -56,7 +56,7 @@ func TestUnmarshalClassInvalid(t *testing.T) {
 func fakeClass() *gradebook.Class {
 	return &gradebook.Class{
 		Name: "Lucretius",
-		Terms: map[string]*gradebook.Term{
+		TermsByID: map[string]*gradebook.Term{
 			"q1": {
 				Start: "20200910",
 				End:   "20201103",
@@ -82,18 +82,18 @@ func fakeClass() *gradebook.Class {
 				End:   "20210609",
 			},
 		},
-		Categories: gradebook.Categories{"major", "minor", "cp"},
-		PrettyCategories: gradebook.PrettyCategories{
+		AssignmentTypes: gradebook.AssignmentTypes{"major", "minor", "cp"},
+		LabelsByAssignmentType: gradebook.LabelsByAssignmentType{
 			"major": "Major assessments",
 			"minor": "Daily work and quizzes",
 			"cp":    "Class participation",
 		},
-		Weights: gradebook.Weights{
+		WeightsByAssignmentType: gradebook.WeightsByAssignmentType{
 			"major": 30,
 			"minor": 40,
 			"cp":    30,
 		},
-		Subcategories: gradebook.Subcategories{
+		CategoriesByAssignmentType: gradebook.CategoriesByAssignmentType{
 			"test":    "major",
 			"project": "major",
 			"essay":   "major",
@@ -101,7 +101,7 @@ func fakeClass() *gradebook.Class {
 			"hw":      "minor",
 			"cp":      "cp",
 		},
-		Students: gradebook.Students{
+		StudentsByEmail: gradebook.StudentsByEmail{
 			"gstriker@school.edu": &gradebook.Student{
 				FirstName: "Gisela",
 				LastName:  "Striker",
@@ -165,9 +165,9 @@ func TestUnmarshalGradebookInvalid(t *testing.T) {
 
 func fakeGradebook() *gradebook.Gradebook {
 	return &gradebook.Gradebook{
-		AssignmentDate:        "20240319",
-		AssignmentCategory:    "minor",
-		AssignmentSubcategory: "quiz",
+		AssignmentDate:     "20240319",
+		AssignmentType:     "minor",
+		AssignmentCategory: "quiz",
 		Grades: gradebook.Grades{
 			&gradebook.Grade{
 				Email: "gstriker@school.edu",
