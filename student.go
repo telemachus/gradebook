@@ -1,6 +1,8 @@
 package gradebook
 
-import "errors"
+import (
+	"errors"
+)
 
 // NewStudent a new *Student. If firstName or lastName is empty, the method
 // returns an error.

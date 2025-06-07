@@ -6,23 +6,23 @@
     "assignment_grades": [
         {
             "email": "gstriker@school.edu",
-            "grade": 94.2
+            "score": 94.2
         },
         {
             "email": "mfrede@school.edu",
-            "grade": 94
+            "score": 94
         },
         {
             "email": "jannas@school.edu",
-            "grade": 104
+            "score": 104
         },
         {
             "email": "agomezlobo@school.edu",
-            "grade": 81
+            "score": 81
         },
         {
             "email": "gfine@school.edu",
-            "grade": null
+            "score": null
         },
     ]
 }

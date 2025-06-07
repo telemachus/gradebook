@@ -49,7 +49,7 @@ type CategoriesByAssignmentType map[string]string
 
 // Grade represents a single grade
 type Grade struct {
-	Grade *float64
+	Score *float64
 	Email string
 }
 
@@ -66,7 +66,7 @@ type Gradebook struct {
 
 // Student represents a student.
 type Student struct {
-	GradesByType map[string][]*float64
+	GradesByType map[string][]float64
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
 }
@@ -135,4 +135,46 @@ func dateSnip(dateStr string) (string, error) {
 	}
 
 	return dateStr, nil
+}
+
+// LoadGrades scans a given directory for *.gradebook files and adds grades
+// from those files to students. The method returns an error if there is
+// a problem reading, unmarshaling, or closing a file.
+func (c *Class) LoadGrades(dir string, _ *Term) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return fmt.Errorf("directory %q does not exist", dir)
+	}
+
+	gradebooks, err := filepath.Glob(filepath.Join(dir, "*.gradebook"))
+	if err != nil {
+		return err
+	}
+
+	for _, gradebook := range gradebooks {
+		gbData, err := UnmarshalGradebook(gradebook)
+		if err != nil {
+			return err
+		}
+
+		assignmentType := gbData.AssignmentType
+		for _, grade := range gbData.Grades {
+			if grade.Score == nil {
+				continue
+			}
+
+			student, ok := c.StudentsByEmail[grade.Email]
+			if !ok {
+				return fmt.Errorf("no student with email %q", grade.Email)
+			}
+
+			_, ok = student.GradesByType[assignmentType]
+			if !ok {
+				return fmt.Errorf("unrecognized assignment type %q", assignmentType)
+			}
+
+			student.GradesByType[assignmentType] = append(student.GradesByType[assignmentType], *grade.Score)
+		}
+	}
+
+	return nil
 }
