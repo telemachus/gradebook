@@ -140,7 +140,7 @@ func dateSnip(dateStr string) (string, error) {
 // LoadGrades scans a given directory for *.gradebook files and adds grades
 // from those files to students. The method returns an error if there is
 // a problem reading, unmarshaling, or closing a file.
-func (c *Class) LoadGrades(dir string, _ *Term) error {
+func (c *Class) LoadGrades(dir string, term *Term) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		return fmt.Errorf("directory %q does not exist", dir)
 	}
@@ -151,29 +151,48 @@ func (c *Class) LoadGrades(dir string, _ *Term) error {
 	}
 
 	for _, gradebook := range gradebooks {
-		gbData, err := UnmarshalGradebook(gradebook)
-		if err != nil {
-			return err
-		}
+		if term != nil {
+			dateStr, err := dateSnip(gradebook)
+			if err != nil {
+				return err
+			}
 
-		assignmentType := gbData.AssignmentType
-		for _, grade := range gbData.Grades {
-			if grade.Score == nil {
+			if !term.Includes(dateStr) {
 				continue
 			}
-
-			student, ok := c.StudentsByEmail[grade.Email]
-			if !ok {
-				return fmt.Errorf("no student with email %q", grade.Email)
-			}
-
-			_, ok = student.GradesByType[assignmentType]
-			if !ok {
-				return fmt.Errorf("unrecognized assignment type %q", assignmentType)
-			}
-
-			student.GradesByType[assignmentType] = append(student.GradesByType[assignmentType], *grade.Score)
 		}
+
+		if err := c.loadGradebookFile(gradebook); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Class) loadGradebookFile(gradebookPath string) error {
+	gbData, err := UnmarshalGradebook(gradebookPath)
+	if err != nil {
+		return err
+	}
+
+	assignmentType := gbData.AssignmentType
+	for _, grade := range gbData.Grades {
+		if grade.Score == nil {
+			continue
+		}
+
+		student, ok := c.StudentsByEmail[grade.Email]
+		if !ok {
+			return fmt.Errorf("no student with email %q", grade.Email)
+		}
+
+		_, ok = student.GradesByType[assignmentType]
+		if !ok {
+			return fmt.Errorf("unrecognized assignment type %q", assignmentType)
+		}
+
+		student.GradesByType[assignmentType] = append(student.GradesByType[assignmentType], *grade.Score)
 	}
 
 	return nil
