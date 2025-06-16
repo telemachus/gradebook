@@ -89,7 +89,7 @@ func TestLoadGradesWithTermFilter(t *testing.T) {
 		}
 
 		student := class.StudentsByEmail["gstriker@school.edu"]
-		if len(student.GradesByType["minor"]) == 0 {
+		if len(student.GradesByCategory["minor"]) == 0 {
 			t.Error("expected grades to be loaded for student within term")
 		}
 	})
@@ -113,7 +113,7 @@ func TestLoadGradesWithTermFilter(t *testing.T) {
 		}
 
 		student := class.StudentsByEmail["gstriker@school.edu"]
-		if len(student.GradesByType["minor"]) > 0 {
+		if len(student.GradesByCategory["minor"]) > 0 {
 			t.Error("expected no grades to be loaded for term with no matching files")
 		}
 	})
@@ -132,7 +132,7 @@ func TestLoadGradesWithTermFilter(t *testing.T) {
 		}
 
 		student := class.StudentsByEmail["gstriker@school.edu"]
-		if len(student.GradesByType["minor"]) == 0 {
+		if len(student.GradesByCategory["minor"]) == 0 {
 			t.Error("expected grades to be loaded when term is nil")
 		}
 	})
@@ -220,9 +220,9 @@ func TestLoadGradesTermBoundaries(t *testing.T) {
 			var hasGrades bool
 
 			if tt.expectedFile == "march" {
-				hasGrades = len(student.GradesByType["minor"]) > 0
+				hasGrades = len(student.GradesByCategory["minor"]) > 0
 			} else if tt.expectedFile == "april" {
-				hasGrades = len(student.GradesByType["major"]) > 0
+				hasGrades = len(student.GradesByCategory["major"]) > 0
 			}
 
 			if tt.shouldLoad && !hasGrades {

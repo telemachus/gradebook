@@ -1,7 +1,7 @@
 package gradebook
 
 import (
-	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -15,7 +15,7 @@ type AverageResult struct {
 // String returns a string representation of an AverageResult.
 func (ar AverageResult) String() string {
 	if ar.Valid {
-		return strconv.FormatFloat(ar.Value, 'g', -1, 64)
+		return strconv.FormatFloat(math.Round(ar.Value), 'f', 0, 64)
 	}
 
 	return "No results"
@@ -25,31 +25,24 @@ func (ar AverageResult) String() string {
 // returns an AverageResult and an error. If the category is unknown, the
 // method returns an error. If the slice of scores is empty, the method returns
 // an invalid AverageResult.
-func (s *Student) Average(category string) (AverageResult, error) {
-	if _, ok := s.GradesByType[category]; !ok {
-		return AverageResult{Valid: false}, fmt.Errorf("unknown grade type: %q", category)
+func (s *Student) Average(category string) AverageResult {
+	if len(s.GradesByCategory[category]) == 0 {
+		return AverageResult{Valid: false}
 	}
 
-	if len(s.GradesByType[category]) < 1 {
-		return AverageResult{Valid: false}, nil
-	}
-
-	return AverageResult{Value: fmean(s.GradesByType[category]), Valid: true}, nil
+	return AverageResult{Value: fmean(s.GradesByCategory[category]), Valid: true}
 }
 
 // TotalAverage returns an AverageResult and error for all of a student's
 // scores. The method will return an invalid result if the student has no
 // scores in any category. The method will return an error if any call to
 // Average for a given category returns an error.
-func (s *Student) TotalAverage(weights WeightsByAssignmentType) (AverageResult, error) {
+func (s *Student) TotalAverage(weights WeightsByAssignmentCategory) AverageResult {
 	var summedAverage float64
 	var summedWeight int
 
 	for assignmentType, weight := range weights {
-		typeAverage, err := s.Average(assignmentType)
-		if err != nil {
-			return AverageResult{Valid: false}, err
-		}
+		typeAverage := s.Average(assignmentType)
 
 		if typeAverage.Valid {
 			summedAverage += typeAverage.Value * float64(weight)
@@ -58,12 +51,12 @@ func (s *Student) TotalAverage(weights WeightsByAssignmentType) (AverageResult, 
 	}
 
 	if summedWeight == 0 {
-		return AverageResult{Valid: false}, nil
+		return AverageResult{Valid: false}
 	}
 
 	totalAverage := summedAverage / float64(summedWeight)
 
-	return AverageResult{Value: totalAverage, Valid: true}, nil
+	return AverageResult{Value: totalAverage, Valid: true}
 }
 
 // Fmean will panic if scores is empty.
