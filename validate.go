@@ -3,6 +3,9 @@ package gradebook
 import (
 	"errors"
 	"fmt"
+	"gradebook/internal/set"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -13,10 +16,7 @@ func zvalErr(zvals []string) error {
 	case 1:
 		return fmt.Errorf("gradebook: a field in Class is unset: %s", zvals[0])
 	default:
-		return fmt.Errorf(
-			"gradebooks: fields in Class are unset: %s",
-			strings.Join(zvals, ", "),
-		)
+		return fmt.Errorf("gradebooks: fields in Class are unset: %s", strings.Join(zvals, ", "))
 	}
 }
 
@@ -27,29 +27,23 @@ func (c *Class) checkInitialization() error {
 	if c.Name == "" {
 		zvals = append(zvals, "Name")
 	}
-
-	if c.Terms == nil {
-		zvals = append(zvals, "Terms")
+	if c.TermsByID == nil {
+		zvals = append(zvals, "TermsByID")
 	}
-
-	if c.Categories == nil {
-		zvals = append(zvals, "Categories")
+	if c.AssignmentCategories == nil {
+		zvals = append(zvals, "AssignmentCategories")
 	}
-
-	if c.PrettyCategories == nil {
-		zvals = append(zvals, "PrettyCategories")
+	if c.LabelsByAssignmentCategory == nil {
+		zvals = append(zvals, "LabelsByAssignmentCategory")
 	}
-
-	if c.Weights == nil {
-		zvals = append(zvals, "Weights")
+	if c.WeightsByAssignmentCategory == nil {
+		zvals = append(zvals, "WeightsByAssignmentCategory")
 	}
-
-	if c.Subcategories == nil {
-		zvals = append(zvals, "Subcategories")
+	if c.CategoriesByAssignmentType == nil {
+		zvals = append(zvals, "CategoriesByAssignmentType")
 	}
-
-	if c.Students == nil {
-		zvals = append(zvals, "Students")
+	if c.StudentsByEmail == nil {
+		zvals = append(zvals, "StudentsByEmail")
 	}
 
 	return zvalErr(zvals)
@@ -58,20 +52,20 @@ func (c *Class) checkInitialization() error {
 // checkWeightsSum ensures that c.Weights adds up to 100%.
 func (c *Class) checkWeightsSum() error {
 	total := 0
-	for _, n := range c.Weights {
+	for _, n := range c.WeightsByAssignmentCategory {
 		total += n
 	}
 
 	if total != 100 {
-		return errors.New("gradebook: Weights must equal 100%")
+		return errors.New("gradebook: WeightsByAssignmentCategory must equal 100%")
 	}
 
 	return nil
 }
 
 // checkEq returns an error if two sets are not equal or nil if they are.
-func checkEq[T comparable](lhs, rhs set[T]) error {
-	if !lhs.equals(rhs) {
+func checkEq[T comparable](lhs, rhs set.Set[T]) error {
+	if !lhs.Equals(rhs) {
 		return fmt.Errorf("%s and %s are not equal sets", lhs, rhs)
 	}
 
@@ -82,16 +76,16 @@ func checkEq[T comparable](lhs, rhs set[T]) error {
 // valid. Otherwise it returns an error containing one more errors from the
 // individual checks. Those errors are combined using errors.Join.
 func (c *Class) Validate() error {
-	cSet := newSet(c.Categories...)
-	sSet := newSet(vals(c.Subcategories)...)
-	wSet := newSet(keys(c.Weights)...)
-	pcSet := newSet(keys(c.PrettyCategories)...)
+	assignmentsSet := set.New(c.AssignmentCategories...)
+	categoriesSet := set.New(slices.Collect(maps.Values(c.CategoriesByAssignmentType))...)
+	weightsSet := set.New(slices.Collect(maps.Keys(c.WeightsByAssignmentCategory))...)
+	labelsSet := set.New(slices.Collect(maps.Keys(c.LabelsByAssignmentCategory))...)
 
 	return errors.Join(
 		c.checkInitialization(),
 		c.checkWeightsSum(),
-		checkEq(cSet, sSet),
-		checkEq(cSet, pcSet),
-		checkEq(cSet, wSet),
+		checkEq(assignmentsSet, categoriesSet),
+		checkEq(assignmentsSet, labelsSet),
+		checkEq(assignmentsSet, weightsSet),
 	)
 }

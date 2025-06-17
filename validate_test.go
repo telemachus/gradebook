@@ -8,7 +8,7 @@ import (
 func TestValid(t *testing.T) {
 	t.Parallel()
 
-	class := testClass()
+	class := fakeClass()
 	if err := class.Validate(); err != nil {
 		t.Errorf("class.ZeroValues() = %v; want no error", err)
 	}
@@ -25,34 +25,34 @@ func TestInitializationInvalid(t *testing.T) {
 				c.Name = ""
 			},
 		},
-		"class.Terms unset": {
+		"class.TermsByID unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Terms = nil
+				c.TermsByID = nil
 			},
 		},
-		"class.Categories unset": {
+		"class.AssignmentCategories unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Categories = nil
+				c.AssignmentCategories = nil
 			},
 		},
-		"class.PrettyCategories unset": {
+		"class.LabelsByAssignmentCategory unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.PrettyCategories = nil
+				c.LabelsByAssignmentCategory = nil
 			},
 		},
-		"class.Weights unset": {
+		"class.WeightsByAssignmentCategory unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights = nil
+				c.WeightsByAssignmentCategory = nil
 			},
 		},
-		"class.Subcategories unset": {
+		"class.CategoriesByAssignmentType unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Subcategories = nil
+				c.CategoriesByAssignmentType = nil
 			},
 		},
-		"class.Students unset": {
+		"class.StudentsByEmail unset": {
 			transformClass: func(c *gradebook.Class) {
-				c.Students = nil
+				c.StudentsByEmail = nil
 			},
 		},
 	}
@@ -61,7 +61,7 @@ func TestInitializationInvalid(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 
-			class := testClass()
+			class := fakeClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
@@ -79,24 +79,24 @@ func TestWeightsSumInvalid(t *testing.T) {
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
-		"no Weights": {
+		"no WeightsByAssignmentCategory": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights = gradebook.Weights{}
+				c.WeightsByAssignmentCategory = gradebook.WeightsByAssignmentCategory{}
 			},
 		},
-		"Weights under 100": {
+		"WeightsByAssignmentCategory under 100": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["major"] = 25
+				c.WeightsByAssignmentCategory["major"] = 25
 			},
 		},
-		"Weights over 100": {
+		"WeightsByAssignmentCategory over 100": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["major"] = 75
+				c.WeightsByAssignmentCategory["major"] = 75
 			},
 		},
 		"Weights below 0": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["major"] = -175
+				c.WeightsByAssignmentCategory["major"] = -175
 			},
 		},
 	}
@@ -105,7 +105,7 @@ func TestWeightsSumInvalid(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 
-			class := testClass()
+			class := fakeClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}
@@ -123,44 +123,44 @@ func TestSetEqualityInvalid(t *testing.T) {
 	testCases := map[string]struct {
 		transformClass func(c *gradebook.Class)
 	}{
-		"missing items from Categories": {
+		"missing items from AssignmentCategories": {
 			transformClass: func(c *gradebook.Class) {
-				clear(c.Categories)
+				clear(c.AssignmentCategories)
 			},
 		},
-		"extra item in Categories": {
+		"extra item in AssignmentCategories": {
 			transformClass: func(c *gradebook.Class) {
-				c.Categories = append(c.Categories, "random")
+				c.AssignmentCategories = append(c.AssignmentCategories, "random")
 			},
 		},
-		"missing item from Subcategories": {
+		"missing item from CategoriesByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.Subcategories, "cp")
+				delete(c.CategoriesByAssignmentType, "cp")
 			},
 		},
-		"extra item in Subcategories": {
+		"extra item in CategoriesByAssignmentType": {
 			transformClass: func(c *gradebook.Class) {
-				c.Subcategories["random"] = "random"
+				c.CategoriesByAssignmentType["random"] = "random"
 			},
 		},
-		"missing item from PrettyCategories": {
+		"missing item from LabelsByAssignmentCategory": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.PrettyCategories, "major")
+				delete(c.LabelsByAssignmentCategory, "cp")
 			},
 		},
-		"extra item in PrettyCategories": {
+		"extra item in LabelsByAssignmentCategory": {
 			transformClass: func(c *gradebook.Class) {
-				c.PrettyCategories["random"] = "Random Item"
+				c.LabelsByAssignmentCategory["random"] = "Random Item"
 			},
 		},
-		"missing item from Weights": {
+		"missing item from WeightsByAssignmentCategory": {
 			transformClass: func(c *gradebook.Class) {
-				delete(c.Weights, "cp")
+				delete(c.WeightsByAssignmentCategory, c.AssignmentCategories[0])
 			},
 		},
-		"extra item in Weights": {
+		"extra item in WeightsByAssignmentCategory": {
 			transformClass: func(c *gradebook.Class) {
-				c.Weights["random"] = 0
+				c.WeightsByAssignmentCategory["random"] = 0
 			},
 		},
 	}
@@ -169,7 +169,7 @@ func TestSetEqualityInvalid(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 
-			class := testClass()
+			class := fakeClass()
 			if tc.transformClass != nil {
 				tc.transformClass(class)
 			}

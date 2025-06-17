@@ -15,9 +15,12 @@ How should this look in Go?
 1. Student objects become student structs.  These structs should have the
    following fields: `FirstName`, `LastName`, `Email`, `Grades`.  The first
    three should be strings; `Grades` should be a map of strings to slices of
-   floats. The strings will represent categories of grades taken from the
-   `class.json` file.  The slices will hold grades for each category.
+   pointers to float. The strings will represent categories of grades taken
+   from the `class.json` file.  The slices will hold grades for each category.
+1. I should create a `New` function, just for `gb-calc`, that creates the
+   `Grades` map for each `Student` struct in the gradebook.  This function
+   should wrap the `Unmarshal` function that other gradebook-related programs
+   will use.  (Other programs won't need a map of `Grades` for students.)
 1. Grades in JSON can be `null`.  In Go, I should probably use pointers.
-   A `nil` pointer represents a null grade.  If a student has no grade for
-   a given assignment, then I will simply leave that item out of that
-   student's slice for that category of grade.
+   A `nil` pointer represents a null grade.  If a grade is `null`, then we
+   don't add it to the student's grades.
