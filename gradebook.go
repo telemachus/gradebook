@@ -50,9 +50,11 @@ type WeightsByAssignmentCategory map[string]int
 type CategoriesByAssignmentType map[string]string
 
 // Grade represents a single grade
+//
+//nolint:govet // JSON field order matters more here than memory alignment.
 type Grade struct {
-	Score *float64 `json:"score"`
 	Email string   `json:"email"`
+	Score *float64 `json:"score"`
 }
 
 // Grades stores Grade structs.
