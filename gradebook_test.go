@@ -1,11 +1,12 @@
 package gradebook_test
 
 import (
-	"gradebook"
 	"math"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/telemachus/gradebook"
 
 	"github.com/google/go-cmp/cmp"
 )

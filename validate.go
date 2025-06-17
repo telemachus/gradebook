@@ -3,10 +3,11 @@ package gradebook
 import (
 	"errors"
 	"fmt"
-	"gradebook/internal/set"
 	"maps"
 	"slices"
 	"strings"
+
+	"github.com/telemachus/gradebook/internal/set"
 )
 
 func zvalErr(zvals []string) error {

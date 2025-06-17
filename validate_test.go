@@ -1,8 +1,9 @@
 package gradebook_test
 
 import (
-	"gradebook"
 	"testing"
+
+	"github.com/telemachus/gradebook"
 )
 
 func TestValid(t *testing.T) {

@@ -1,4 +1,4 @@
-module gradebook
+module github.com/telemachus/gradebook
 
 go 1.24
 

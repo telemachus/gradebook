@@ -1,8 +1,9 @@
 package set_test
 
 import (
-	"gradebook/internal/set"
 	"testing"
+
+	"github.com/telemachus/gradebook/internal/set"
 )
 
 func TestSetEquals(t *testing.T) {
