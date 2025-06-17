@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/telemachus/gradebook"
-
 	"github.com/google/go-cmp/cmp"
+	"github.com/telemachus/gradebook"
 )
 
 var (

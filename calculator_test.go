@@ -3,9 +3,8 @@ package gradebook_test
 import (
 	"testing"
 
-	"github.com/telemachus/gradebook"
-
 	"github.com/google/go-cmp/cmp"
+	"github.com/telemachus/gradebook"
 )
 
 func TestUnmarshalCalcClass(t *testing.T) {
