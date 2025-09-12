@@ -21,7 +21,7 @@ below for more details about both of these filetypes.)
     "assignment_name": "NAME",
     "assignment_type": "TYPE",
     "assignment_category": "CATEGORY",
-    "assignment_grades": [
+    "assignment_records": [
         {
             "email": "STUDENT_EMAIL",
             "grade": null
@@ -61,7 +61,7 @@ below for more details about both of these filetypes.)
 ```json
 {
 	"name": "NAME",
-	"terms": {
+	"terms_by_id": {
 		"TERM1": {
 			"start": "DATE-STRING",
 			"end": "DATE-STRING"
@@ -71,24 +71,25 @@ below for more details about both of these filetypes.)
 			"end": "DATE-STRING"
 		}
 	},
-	"categories": [ "CATEGORY1", "CATEGORY2", "ETC." ],
-	"pretty_categories": {
-		"CATEGORY1": "Some human-readable representation of CATEGORY1",
-		"CATEGORY2": "Some human-readable representation of CATEGORY2"
+	"assignment_categories": [ "CATEGORY1", "CATEGORY2", "ETC." ],
+	"labels_by_assignment_category": {
+		"CATEGORY1": "Some human-readable version of CATEGORY1",
+		"CATEGORY2": "Some human-readable version of CATEGORY2"
 	},
-	"weights": {
+	"weights_by_assignment_category": {
 		"CATEGORY1": 50,
-		"CATEGORY2": 50
+		"CATEGORY2": 25,
+		"CATEGORY3": 25
 	},
-	"subcategories": {
-		"SUBCATEGORY1": "CATEGORY1",
-		"SUBCATEGORY2": "CATEGORY1",
-		"SUBCATEGORY3": "CATEGORY1",
-		"SUBCATEGORY4": "CATEGORY2",
-		"SUBCATEGORY5": "CATEGORY2"
-                "SUBCATEGORY6": "CATEGORY3"
+	"categories_by_assignment_type": {
+		"ASSIGNMENT_TYPE1": "CATEGORY1",
+		"ASSIGNMENT_TYPE2": "CATEGORY1",
+		"ASSIGNMENT_TYPE3": "CATEGORY1",
+		"ASSIGNMENT_TYPE4": "CATEGORY2",
+		"ASSIGNMENT_TYPE5": "CATEGORY2",
+		"ASSIGNMENT_TYPE6": "CATEGORY3"
 	},
-	"students": {
+	"students_by_email": {
 		"somestudent@school.edu": {
 			"first_name": "SOME",
 			"last_name": "STUDENT"

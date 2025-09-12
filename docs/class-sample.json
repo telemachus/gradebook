@@ -1,0 +1,54 @@
+{
+    "name": "Introduction to Philosophy",
+    "assignment_categories": [
+        "major",
+        "minor", 
+        "participation"
+    ],
+    "categories_by_assignment_type": {
+        "essay": "major",
+        "test": "major",
+        "quiz": "minor",
+        "homework": "minor",
+        "discussion": "participation",
+        "attendance": "participation"
+    },
+    "labels_by_assignment_category": {
+        "major": "Major Assessments (Essays & Tests)",
+        "minor": "Daily Work & Quizzes",
+        "participation": "Class Participation & Attendance"
+    },
+    "weights_by_assignment_category": {
+        "major": 50,
+        "minor": 30,
+        "participation": 20
+    },
+    "students_by_email": {
+        "alice.smith@university.edu": {
+            "first_name": "Alice",
+            "last_name": "Smith"
+        },
+        "bob.jones@university.edu": {
+            "first_name": "Bob", 
+            "last_name": "Jones"
+        },
+        "carol.wong@university.edu": {
+            "first_name": "Carol",
+            "last_name": "Wong"
+        },
+        "david.miller@university.edu": {
+            "first_name": "David",
+            "last_name": "Miller"
+        }
+    },
+    "terms_by_id": {
+        "fall2024": {
+            "start": "20240825",
+            "end": "20241215"
+        },
+        "spring2025": {
+            "start": "20250115", 
+            "end": "20250505"
+        }
+    }
+}

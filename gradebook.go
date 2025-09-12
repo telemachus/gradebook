@@ -49,24 +49,26 @@ type WeightsByAssignmentCategory map[string]int
 // "cp"."
 type CategoriesByAssignmentType map[string]string
 
-// Grade represents a single grade
+// AssignmentRecord represents a grade for a particular student on a particular
+// assignment. If AssignmentRecord.Grade is nil, then the student was absent on the day
+// of the assignment and should not be counted when calculating grades.
 //
 //nolint:govet // JSON field order matters more here than memory alignment.
-type Grade struct {
+type AssignmentRecord struct {
 	Email string   `json:"email"`
-	Score *float64 `json:"score"`
+	Grade *float64 `json:"grade"`
 }
 
-// Grades stores Grade structs.
-type Grades []*Grade
+// AssignmentRecords stores AssignmentRecord structs.
+type AssignmentRecords []*AssignmentRecord
 
 // Gradebook represents a single gradebook file.
 type Gradebook struct {
-	AssignmentDate     string `json:"assignment_date"`
-	AssignmentName     string `json:"assignment_name"`
-	AssignmentType     string `json:"assignment_type"`
-	AssignmentCategory string `json:"assignment_category"`
-	AssignmentGrades   Grades `json:"assignment_grades"`
+	AssignmentDate     string            `json:"assignment_date"`
+	AssignmentName     string            `json:"assignment_name"`
+	AssignmentType     string            `json:"assignment_type"`
+	AssignmentCategory string            `json:"assignment_category"`
+	AssignmentRecords  AssignmentRecords `json:"assignment_records"`
 }
 
 // Student represents a student.
@@ -182,14 +184,14 @@ func (c *Class) loadGradebookFile(gradebookPath string) error {
 	}
 
 	assignmentType := gbData.AssignmentType
-	for _, grade := range gbData.AssignmentGrades {
-		if grade.Score == nil {
+	for _, ar := range gbData.AssignmentRecords {
+		if ar.Grade == nil {
 			continue
 		}
 
-		student, ok := c.StudentsByEmail[grade.Email]
+		student, ok := c.StudentsByEmail[ar.Email]
 		if !ok {
-			return fmt.Errorf("no student with email %q", grade.Email)
+			return fmt.Errorf("no student with email %q", ar.Email)
 		}
 
 		category, ok := c.CategoriesByAssignmentType[assignmentType]
@@ -201,7 +203,7 @@ func (c *Class) loadGradebookFile(gradebookPath string) error {
 			return fmt.Errorf("unrecognized assignment category %q (for type %q)", category, assignmentType)
 		}
 
-		student.GradesByCategory[category] = append(student.GradesByCategory[category], *grade.Score)
+		student.GradesByCategory[category] = append(student.GradesByCategory[category], *ar.Grade)
 	}
 
 	return nil
