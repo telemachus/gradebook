@@ -1,26 +1,26 @@
 {
     "assignment_category": "minor",
     "assignment_date": "20240319",
-    "assignment_grades": [
+    "assignment_records": [
         {
             "email": "gstriker@school.edu",
-            "score": 94.2
+            "grade": 94.2
         },
         {
             "email": "mfrede@school.edu",
-            "score": 94
+            "grade": 94
         },
         {
             "email": "jannas@school.edu",
-            "score": 104
+            "grade": 104
         },
         {
             "email": "agomezlobo@school.edu",
-            "score": 81
+            "grade": 81
         },
         {
             "email": "gfine@school.edu",
-            "score": null
+            "grade": null
         }
     ],
     "assignment_name": "golden",
