@@ -2,7 +2,7 @@
     "name": "Introduction to Philosophy",
     "assignment_categories": [
         "major",
-        "minor", 
+        "minor",
         "participation"
     ],
     "categories_by_assignment_type": {
@@ -24,21 +24,17 @@
         "participation": 20
     },
     "students_by_email": {
-        "alice.smith@university.edu": {
+        "jane.doe@university.edu": {
             "first_name": "Alice",
             "last_name": "Smith"
         },
-        "bob.jones@university.edu": {
-            "first_name": "Bob", 
+        "john.doe@university.edu": {
+            "first_name": "Bob",
             "last_name": "Jones"
         },
-        "carol.wong@university.edu": {
+        "richard.roe@university.edu": {
             "first_name": "Carol",
             "last_name": "Wong"
-        },
-        "david.miller@university.edu": {
-            "first_name": "David",
-            "last_name": "Miller"
         }
     },
     "terms_by_id": {
@@ -47,7 +43,7 @@
             "end": "20241215"
         },
         "spring2025": {
-            "start": "20250115", 
+            "start": "20250115",
             "end": "20250505"
         }
     }

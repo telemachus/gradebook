@@ -1,24 +1,20 @@
 {
-    "assignment_name": "Midterm Exam",
     "assignment_date": "20241015",
+    "assignment_name": "midterm",
     "assignment_type": "test",
     "assignment_category": "major",
     "assignment_records": [
         {
-            "email": "alice.smith@university.edu",
+            "email": "jane.doe@university.edu",
             "grade": 89.5
         },
         {
-            "email": "bob.jones@university.edu", 
+            "email": "john.doe@university.edu",
             "grade": 76.0
         },
         {
-            "email": "carol.wong@university.edu",
+            "email": "richard.roe@university.edu",
             "grade": 92.5
-        },
-        {
-            "email": "david.miller@university.edu",
-            "grade": null
         }
     ]
 }
