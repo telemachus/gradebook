@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 const (
@@ -46,12 +45,12 @@ type WeightsByAssignmentCategory map[string]int
 // this is less obvious, every assignment category must have an assignment
 // type. If a category has only a single assignment type, the category and type
 // will often have the same name.  E.g., both the category and the type are
-// "cp"."
+// "cp".
 type CategoriesByAssignmentType map[string]string
 
 // AssignmentRecord represents a grade for a particular student on a particular
-// assignment. If AssignmentRecord.Grade is nil, then the student was absent on the day
-// of the assignment and should not be counted when calculating grades.
+// assignment. If AssignmentRecord.Grade is nil, then no score has been
+// recorded yet and the record should not be counted when calculating grades.
 //
 //nolint:govet // JSON field order matters more here than memory alignment.
 type AssignmentRecord struct {
@@ -73,9 +72,10 @@ type Gradebook struct {
 
 // Student represents a student.
 type Student struct {
-	GradesByCategory map[string][]float64
-	FirstName        string `json:"first_name"`
-	LastName         string `json:"last_name"`
+	GradesByCategory   map[string][]float64
+	UnscoredByCategory map[string]int
+	FirstName          string `json:"first_name"`
+	LastName           string `json:"last_name"`
 }
 
 // StudentsByEmail maps students by their email. (NB: an email is an
@@ -96,31 +96,20 @@ type Class struct {
 
 // UnmarshalClass unmarshals a class.json file into a pointer to Class.
 func UnmarshalClass(classFile string) (*Class, error) {
-	data, err := os.ReadFile(filepath.Clean(classFile))
-	if err != nil {
-		return nil, err
-	}
-
-	var class Class
-	err = json.Unmarshal(data, &class)
-	if err != nil {
-		return nil, err
-	}
-
-	return &class, nil
+	return unmarshalClassWithInit(classFile, 0)
 }
 
 // UnmarshalGradebook unmarshals a gradebook file into a pointer to Gradebook.
 func UnmarshalGradebook(gradebookFile string) (*Gradebook, error) {
 	data, err := os.ReadFile(filepath.Clean(gradebookFile))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gradebook: read gradebook file %q: %w", gradebookFile, err)
 	}
 
 	var gradebook Gradebook
 	err = json.Unmarshal(data, &gradebook)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gradebook: unmarshal gradebook file %q: %w", gradebookFile, err)
 	}
 
 	return &gradebook, nil
@@ -129,16 +118,16 @@ func UnmarshalGradebook(gradebookFile string) (*Gradebook, error) {
 // dateSnip gets the date string from the end of a gradebook filename. If the
 // function does not find a valid date (in YYYYMMDD format), then it return an
 // error.
-func dateSnip(dateStr string) (string, error) {
-	dateStr = strings.TrimSuffix(dateStr, gradebookSuffix)
-	dateStrLen := utf8.RuneCountInString(dateStr)
-	if dateStrLen < dateFmtLen {
-		return "", fmt.Errorf("[%s] does not contain a valid YYYYMMDD date", dateStr)
+func dateSnip(name string) (string, error) {
+	base := filepath.Base(name)
+	stem := strings.TrimSuffix(base, gradebookSuffix)
+	if len(stem) < dateFmtLen {
+		return "", fmt.Errorf("gradebook: invalid yyyymmdd date in gradebook file name %q", base)
 	}
 
-	dateStr = dateStr[dateStrLen-dateFmtLen:]
+	dateStr := stem[len(stem)-dateFmtLen:]
 	if _, err := time.Parse("20060102", dateStr); err != nil {
-		return "", fmt.Errorf("[%s] does not contain a valid YYYYMMDD date", dateStr)
+		return "", fmt.Errorf("gradebook: invalid yyyymmdd date in gradebook file name %q", base)
 	}
 
 	return dateStr, nil
@@ -148,11 +137,23 @@ func dateSnip(dateStr string) (string, error) {
 // from those files to students. The method returns an error if there is
 // a problem reading, unmarshaling, or closing a file.
 func (c *Class) LoadGrades(dir string, term *Term) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		return fmt.Errorf("directory %q does not exist", dir)
-	}
+	c.initializeStudentMaps(initGrades)
 
-	gradebooks, err := filepath.Glob(filepath.Join(dir, "*.gradebook"))
+	return c.loadGradebooks(dir, term, false)
+}
+
+// LoadUnscored scans a given directory for *.gradebook files and counts
+// unscored assignments for each student by assignment category. The method
+// returns an error if there is a problem reading, unmarshaling, or closing a
+// file.
+func (c *Class) LoadUnscored(dir string, term *Term) error {
+	c.initializeStudentMaps(initUnscored)
+
+	return c.loadGradebooks(dir, term, true)
+}
+
+func (c *Class) loadGradebooks(dir string, term *Term, countUnscored bool) error {
+	gradebooks, err := gradebookFilesInDir(dir)
 	if err != nil {
 		return err
 	}
@@ -169,7 +170,7 @@ func (c *Class) LoadGrades(dir string, term *Term) error {
 			}
 		}
 
-		if err := c.loadGradebookFile(gradebook); err != nil {
+		if err := c.loadGradebookFile(gradebook, countUnscored); err != nil {
 			return err
 		}
 	}
@@ -177,34 +178,90 @@ func (c *Class) LoadGrades(dir string, term *Term) error {
 	return nil
 }
 
-func (c *Class) loadGradebookFile(gradebookPath string) error {
+func gradebookFilesInDir(dir string) ([]string, error) {
+	entries, err := os.ReadDir(filepath.Clean(dir))
+	if err != nil {
+		return nil, fmt.Errorf("gradebook: read directory %q: %w", dir, err)
+	}
+
+	gradebooks := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		if filepath.Ext(entry.Name()) != gradebookSuffix {
+			continue
+		}
+
+		gradebooks = append(gradebooks, filepath.Join(dir, entry.Name()))
+	}
+
+	return gradebooks, nil
+}
+
+func (c *Class) loadGradebookFile(gradebookPath string, countUnscored bool) error {
 	gbData, err := UnmarshalGradebook(gradebookPath)
 	if err != nil {
 		return err
 	}
 
-	assignmentType := gbData.AssignmentType
-	for _, ar := range gbData.AssignmentRecords {
+	category, err := c.categoryForAssignmentType(gbData.AssignmentType)
+	if err != nil {
+		return err
+	}
+
+	for i, ar := range gbData.AssignmentRecords {
+		if ar == nil {
+			return fmt.Errorf("gradebook: nil assignment record at index %d in %q", i, gradebookPath)
+		}
+
+		student, err := c.studentByEmail(ar.Email)
+		if err != nil {
+			return err
+		}
+
+		if countUnscored {
+			if ar.Grade != nil {
+				continue
+			}
+			student.UnscoredByCategory[category]++
+
+			continue
+		}
+
 		if ar.Grade == nil {
 			continue
 		}
 
-		student, ok := c.StudentsByEmail[ar.Email]
+		_, ok := student.GradesByCategory[category]
 		if !ok {
-			return fmt.Errorf("no student with email %q", ar.Email)
-		}
-
-		category, ok := c.CategoriesByAssignmentType[assignmentType]
-		if !ok {
-			return fmt.Errorf("unrecognized assignment type %q", assignmentType)
-		}
-		_, ok = student.GradesByCategory[category]
-		if !ok {
-			return fmt.Errorf("unrecognized assignment category %q (for type %q)", category, assignmentType)
+			return fmt.Errorf("gradebook: unrecognized assignment category %q for type %q", category, gbData.AssignmentType)
 		}
 
 		student.GradesByCategory[category] = append(student.GradesByCategory[category], *ar.Grade)
 	}
 
 	return nil
+}
+
+func (c *Class) studentByEmail(email string) (*Student, error) {
+	student, ok := c.StudentsByEmail[email]
+	if !ok {
+		return nil, fmt.Errorf("gradebook: no student with email %q", email)
+	}
+	if student == nil {
+		return nil, fmt.Errorf("gradebook: student with email %q is nil", email)
+	}
+
+	return student, nil
+}
+
+func (c *Class) categoryForAssignmentType(assignmentType string) (string, error) {
+	category, ok := c.CategoriesByAssignmentType[assignmentType]
+	if !ok {
+		return "", fmt.Errorf("gradebook: unrecognized assignment type %q", assignmentType)
+	}
+
+	return category, nil
 }

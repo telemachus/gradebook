@@ -159,80 +159,108 @@ func TestLoadGradesNonexistentDirectory(t *testing.T) {
 
 func fakeCalcClass() *gradebook.Class {
 	return &gradebook.Class{
-		Name: "Lucretius",
-		TermsByID: map[string]*gradebook.Term{
-			"q1": {
-				Start: "20200910",
-				End:   "20201103",
-			},
-			"q2": {
-				Start: "20201108",
-				End:   "20210114",
-			},
-			"q3": {
-				Start: "20210124",
-				End:   "20210311",
-			},
-			"q4": {
-				Start: "20210328",
-				End:   "20210609",
-			},
-			"s1": {
-				Start: "20200910",
-				End:   "20210114",
-			},
-			"s2": {
-				Start: "20210124",
-				End:   "20210609",
-			},
+		Name:                        "Lucretius",
+		TermsByID:                   fakeTermsByID(),
+		AssignmentCategories:        fakeAssignmentCategories(),
+		LabelsByAssignmentCategory:  fakeLabelsByAssignmentCategory(),
+		WeightsByAssignmentCategory: fakeWeightsByAssignmentCategory(),
+		CategoriesByAssignmentType:  fakeCategoriesByAssignmentType(),
+		StudentsByEmail:             fakeCalcStudentsByEmail(),
+	}
+}
+
+func fakeTermsByID() map[string]*gradebook.Term {
+	return map[string]*gradebook.Term{
+		"q1": {
+			Start: "20200910",
+			End:   "20201103",
 		},
-		AssignmentCategories: gradebook.AssignmentCategories{"major", "minor", "cp"},
-		LabelsByAssignmentCategory: gradebook.LabelsByAssignmentCategory{
-			"major": "Major assessments",
-			"minor": "Daily work and quizzes",
-			"cp":    "Class participation",
+		"q2": {
+			Start: "20201108",
+			End:   "20210114",
 		},
-		WeightsByAssignmentCategory: gradebook.WeightsByAssignmentCategory{
-			"major": 30,
-			"minor": 40,
-			"cp":    30,
+		"q3": {
+			Start: "20210124",
+			End:   "20210311",
 		},
-		CategoriesByAssignmentType: gradebook.CategoriesByAssignmentType{
-			"test":    "major",
-			"project": "major",
-			"essay":   "major",
-			"quiz":    "minor",
-			"hw":      "minor",
-			"cp":      "cp",
+		"q4": {
+			Start: "20210328",
+			End:   "20210609",
 		},
-		StudentsByEmail: gradebook.StudentsByEmail{
-			"gstriker@school.edu": &gradebook.Student{
-				FirstName:        "Gisela",
-				LastName:         "Striker",
-				GradesByCategory: fakeGradesMap(),
-			},
-			"mfrede@school.edu": &gradebook.Student{
-				FirstName:        "Michael",
-				LastName:         "Frede",
-				GradesByCategory: fakeGradesMap(),
-			},
-			"jannas@school.edu": &gradebook.Student{
-				FirstName:        "Julia",
-				LastName:         "Annas",
-				GradesByCategory: fakeGradesMap(),
-			},
-			"agomezlobo@school.edu": &gradebook.Student{
-				FirstName:        "Alfonso",
-				LastName:         "Gómez-Lobo",
-				GradesByCategory: fakeGradesMap(),
-			},
-			"gfine@school.edu": &gradebook.Student{
-				FirstName:        "Gail",
-				LastName:         "Fine",
-				GradesByCategory: fakeGradesMap(),
-			},
+		"s1": {
+			Start: "20200910",
+			End:   "20210114",
+		},
+		"s2": {
+			Start: "20210124",
+			End:   "20210609",
 		},
 	}
+}
+
+func fakeAssignmentCategories() gradebook.AssignmentCategories {
+	return gradebook.AssignmentCategories{"major", "minor", "cp"}
+}
+
+func fakeLabelsByAssignmentCategory() gradebook.LabelsByAssignmentCategory {
+	return gradebook.LabelsByAssignmentCategory{
+		"major": "Major assessments",
+		"minor": "Daily work and quizzes",
+		"cp":    "Class participation",
+	}
+}
+
+func fakeWeightsByAssignmentCategory() gradebook.WeightsByAssignmentCategory {
+	return gradebook.WeightsByAssignmentCategory{
+		"major": 30,
+		"minor": 40,
+		"cp":    30,
+	}
+}
+
+func fakeCategoriesByAssignmentType() gradebook.CategoriesByAssignmentType {
+	return gradebook.CategoriesByAssignmentType{
+		"test":    "major",
+		"project": "major",
+		"essay":   "major",
+		"quiz":    "minor",
+		"hw":      "minor",
+		"cp":      "cp",
+	}
+}
+
+func fakeStudentsByEmail() gradebook.StudentsByEmail {
+	return gradebook.StudentsByEmail{
+		"gstriker@school.edu": &gradebook.Student{
+			FirstName: "Gisela",
+			LastName:  "Striker",
+		},
+		"mfrede@school.edu": &gradebook.Student{
+			FirstName: "Michael",
+			LastName:  "Frede",
+		},
+		"jannas@school.edu": &gradebook.Student{
+			FirstName: "Julia",
+			LastName:  "Annas",
+		},
+		"agomezlobo@school.edu": &gradebook.Student{
+			FirstName: "Alfonso",
+			LastName:  "Gómez-Lobo",
+		},
+		"gfine@school.edu": &gradebook.Student{
+			FirstName: "Gail",
+			LastName:  "Fine",
+		},
+	}
+}
+
+func fakeCalcStudentsByEmail() gradebook.StudentsByEmail {
+	students := fakeStudentsByEmail()
+	for _, student := range students {
+		student.GradesByCategory = fakeGradesMap()
+	}
+
+	return students
 }
 
 func fakeGradebook() *gradebook.Gradebook {
@@ -267,74 +295,13 @@ func fakeGradebook() *gradebook.Gradebook {
 
 func fakeClass() *gradebook.Class {
 	return &gradebook.Class{
-		Name: "Lucretius",
-		TermsByID: map[string]*gradebook.Term{
-			"q1": {
-				Start: "20200910",
-				End:   "20201103",
-			},
-			"q2": {
-				Start: "20201108",
-				End:   "20210114",
-			},
-			"q3": {
-				Start: "20210124",
-				End:   "20210311",
-			},
-			"q4": {
-				Start: "20210328",
-				End:   "20210609",
-			},
-			"s1": {
-				Start: "20200910",
-				End:   "20210114",
-			},
-			"s2": {
-				Start: "20210124",
-				End:   "20210609",
-			},
-		},
-		AssignmentCategories: gradebook.AssignmentCategories{"major", "minor", "cp"},
-		LabelsByAssignmentCategory: gradebook.LabelsByAssignmentCategory{
-			"major": "Major assessments",
-			"minor": "Daily work and quizzes",
-			"cp":    "Class participation",
-		},
-		WeightsByAssignmentCategory: gradebook.WeightsByAssignmentCategory{
-			"major": 30,
-			"minor": 40,
-			"cp":    30,
-		},
-		CategoriesByAssignmentType: gradebook.CategoriesByAssignmentType{
-			"test":    "major",
-			"project": "major",
-			"essay":   "major",
-			"quiz":    "minor",
-			"hw":      "minor",
-			"cp":      "cp",
-		},
-		StudentsByEmail: gradebook.StudentsByEmail{
-			"gstriker@school.edu": &gradebook.Student{
-				FirstName: "Gisela",
-				LastName:  "Striker",
-			},
-			"mfrede@school.edu": &gradebook.Student{
-				FirstName: "Michael",
-				LastName:  "Frede",
-			},
-			"jannas@school.edu": &gradebook.Student{
-				FirstName: "Julia",
-				LastName:  "Annas",
-			},
-			"agomezlobo@school.edu": &gradebook.Student{
-				FirstName: "Alfonso",
-				LastName:  "Gómez-Lobo",
-			},
-			"gfine@school.edu": &gradebook.Student{
-				FirstName: "Gail",
-				LastName:  "Fine",
-			},
-		},
+		Name:                        "Lucretius",
+		TermsByID:                   fakeTermsByID(),
+		AssignmentCategories:        fakeAssignmentCategories(),
+		LabelsByAssignmentCategory:  fakeLabelsByAssignmentCategory(),
+		WeightsByAssignmentCategory: fakeWeightsByAssignmentCategory(),
+		CategoriesByAssignmentType:  fakeCategoriesByAssignmentType(),
+		StudentsByEmail:             fakeStudentsByEmail(),
 	}
 }
 
