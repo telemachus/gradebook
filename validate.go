@@ -6,6 +6,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/telemachus/gradebook/internal/set"
 )
@@ -15,9 +16,9 @@ func zvalErr(zvals []string) error {
 	case 0:
 		return nil
 	case 1:
-		return fmt.Errorf("gradebook: a field in Class is unset: %s", zvals[0])
+		return fmt.Errorf("gradebook: class field is unset: %s", zvals[0])
 	default:
-		return fmt.Errorf("gradebooks: fields in Class are unset: %s", strings.Join(zvals, ", "))
+		return fmt.Errorf("gradebook: class fields are unset: %s", strings.Join(zvals, ", "))
 	}
 }
 
@@ -58,16 +59,71 @@ func (c *Class) checkWeightsSum() error {
 	}
 
 	if total != 100 {
-		return errors.New("gradebook: WeightsByAssignmentCategory must equal 100%")
+		return errors.New("gradebook: weights by assignment category must equal 100")
 	}
 
 	return nil
 }
 
+func (c *Class) checkTerms() error {
+	errs := make([]error, 0, len(c.TermsByID))
+	for id, term := range c.TermsByID {
+		if term == nil {
+			errs = append(errs, fmt.Errorf("gradebook: term %q is nil", id))
+
+			continue
+		}
+
+		start, startErr := time.Parse("20060102", term.Start)
+		if startErr != nil {
+			errs = append(errs, fmt.Errorf("gradebook: term %q has invalid start date %q", id, term.Start))
+		}
+
+		end, endErr := time.Parse("20060102", term.End)
+		if endErr != nil {
+			errs = append(errs, fmt.Errorf("gradebook: term %q has invalid end date %q", id, term.End))
+		}
+
+		if startErr == nil && endErr == nil && start.After(end) {
+			errs = append(errs, fmt.Errorf("gradebook: term %q start date is after end date", id))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func (c *Class) checkStudents() error {
+	errs := make([]error, 0, len(c.StudentsByEmail))
+	for email, student := range c.StudentsByEmail {
+		if email == "" {
+			errs = append(errs, errors.New("gradebook: student email must not be empty"))
+		}
+		if strings.TrimSpace(email) != email {
+			errs = append(errs, fmt.Errorf("gradebook: student email %q has leading or trailing whitespace", email))
+		}
+		if !strings.Contains(email, "@") {
+			errs = append(errs, fmt.Errorf("gradebook: student email %q must contain @", email))
+		}
+		if student == nil {
+			errs = append(errs, fmt.Errorf("gradebook: student %q is nil", email))
+
+			continue
+		}
+		if strings.TrimSpace(student.FirstName) == "" {
+			errs = append(errs, fmt.Errorf("gradebook: student %q first_name must not be empty", email))
+		}
+		if strings.TrimSpace(student.LastName) == "" {
+			errs = append(errs, fmt.Errorf("gradebook: student %q last_name must not be empty", email))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 // checkEq returns an error if two sets are not equal or nil if they are.
 func checkEq[T comparable](lhs, rhs set.Set[T]) error {
 	if !lhs.Equals(rhs) {
-		return fmt.Errorf("%s and %s are not equal sets", lhs, rhs)
+		return fmt.Errorf("gradebook: %s and %s are not equal sets", lhs, rhs)
 	}
 
 	return nil
@@ -84,6 +140,8 @@ func (c *Class) Validate() error {
 
 	return errors.Join(
 		c.checkInitialization(),
+		c.checkTerms(),
+		c.checkStudents(),
 		c.checkWeightsSum(),
 		checkEq(assignmentsSet, categoriesSet),
 		checkEq(assignmentsSet, labelsSet),

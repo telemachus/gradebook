@@ -118,6 +118,79 @@ func TestWeightsSumInvalid(t *testing.T) {
 	}
 }
 
+func TestTermsInvalid(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]func(c *gradebook.Class){
+		"nil term value": func(c *gradebook.Class) {
+			c.TermsByID["q1"] = nil
+		},
+		"invalid term start date": func(c *gradebook.Class) {
+			c.TermsByID["q1"].Start = "20240230"
+		},
+		"invalid term end date": func(c *gradebook.Class) {
+			c.TermsByID["q1"].End = "20240230"
+		},
+		"term start date after end date": func(c *gradebook.Class) {
+			c.TermsByID["q1"].Start = "20250101"
+			c.TermsByID["q1"].End = "20240101"
+		},
+	}
+
+	for msg, transformClass := range testCases {
+		t.Run(msg, func(t *testing.T) {
+			t.Parallel()
+
+			class := fakeClass()
+			transformClass(class)
+			if err := class.Validate(); err == nil {
+				t.Errorf("class.Validate() returns nil; want error for %s", msg)
+			}
+		})
+	}
+}
+
+func TestStudentsInvalid(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]func(c *gradebook.Class){
+		"nil student pointer": func(c *gradebook.Class) {
+			c.StudentsByEmail["gstriker@school.edu"] = nil
+		},
+		"empty student email": func(c *gradebook.Class) {
+			c.StudentsByEmail[""] = c.StudentsByEmail["gstriker@school.edu"]
+			delete(c.StudentsByEmail, "gstriker@school.edu")
+		},
+		"student email missing at sign": func(c *gradebook.Class) {
+			c.StudentsByEmail["gstrikerschool.edu"] = c.StudentsByEmail["gstriker@school.edu"]
+			delete(c.StudentsByEmail, "gstriker@school.edu")
+		},
+		"student email has surrounding whitespace": func(c *gradebook.Class) {
+			c.StudentsByEmail[" gstriker@school.edu "] = c.StudentsByEmail["gstriker@school.edu"]
+			delete(c.StudentsByEmail, "gstriker@school.edu")
+		},
+		"empty first name": func(c *gradebook.Class) {
+			c.StudentsByEmail["gstriker@school.edu"].FirstName = ""
+		},
+		"empty last name": func(c *gradebook.Class) {
+			c.StudentsByEmail["gstriker@school.edu"].LastName = ""
+		},
+	}
+
+	for msg, transformClass := range testCases {
+		t.Run(msg, func(t *testing.T) {
+			t.Parallel()
+
+			class := fakeClass()
+			transformClass(class)
+			if err := class.Validate(); err == nil {
+				t.Errorf("class.Validate() returns nil; want error for %s", msg)
+			}
+		})
+	}
+}
+
+//nolint:funlen // Grouping invalid cases matters more than function length.
 func TestSetEqualityInvalid(t *testing.T) {
 	t.Parallel()
 
