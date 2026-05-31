@@ -14,39 +14,44 @@ const (
 	initUnscored
 )
 
-// UnmarshalUnscoredClass unmarshals a class.json file into a pointer to Class.
-// Unlike UnmarshalClass, this function creates the UnscoredByCategory map
+// ParseClassFileForUnscored parses a class.json file into a pointer to Class.
+// Unlike ParseClassFile, this function creates the UnscoredByCategory map
 // needed to count unscored assignments.
-func UnmarshalUnscoredClass(classFile string) (*Class, error) {
-	return unmarshalClassWithInit(classFile, initUnscored)
+func ParseClassFileForUnscored(classFile string) (*Class, error) {
+	return parseClassFileWithInit(classFile, initUnscored)
 }
 
-// UnmarshalCalcClass unmarshals a class.json file into a pointer to Class.
-// Unlike UnmarshalClass, this function creates the Grades map needed to store
-// grades.
-func UnmarshalCalcClass(classFile string) (*Class, error) {
-	return unmarshalClassWithInit(classFile, initGrades)
+// ParseClassFileForGrades parses a class.json file into a pointer to Class.
+// Unlike ParseClassFile, this function creates the GradesByCategory map needed
+// to store grades.
+func ParseClassFileForGrades(classFile string) (*Class, error) {
+	return parseClassFileWithInit(classFile, initGrades)
 }
 
-func unmarshalClassWithInit(classFile string, mode classInitMode) (*Class, error) {
+func parseClassFileWithInit(classFile string, mode classInitMode) (*Class, error) {
 	data, err := os.ReadFile(filepath.Clean(classFile))
 	if err != nil {
 		return nil, fmt.Errorf("gradebook: read class file %q: %w", classFile, err)
 	}
 
-	var class Class
-	err = json.Unmarshal(data, &class)
+	var spec ClassSpec
+	err = json.Unmarshal(data, &spec)
 	if err != nil {
 		return nil, fmt.Errorf("gradebook: unmarshal class file %q: %w", classFile, err)
 	}
 
+	class := cloneClassFromSpec(&spec)
+	if err := class.trustParsedData(); err != nil {
+		return nil, &InvalidClassError{Err: err}
+	}
+
 	class.initializeStudentMaps(mode)
 
-	return &class, nil
+	return class, nil
 }
 
 func (c *Class) initializeStudentMaps(mode classInitMode) {
-	for _, student := range c.StudentsByEmail {
+	for _, student := range c.studentsForInitialization() {
 		if student == nil {
 			continue
 		}
@@ -54,6 +59,24 @@ func (c *Class) initializeStudentMaps(mode classInitMode) {
 		c.initializeStudentGradesMap(student, mode)
 		c.initializeStudentUnscoredMap(student, mode)
 	}
+
+	c.projectTrustedStudentsToCompatibilityFields()
+}
+
+func (c *Class) studentsForInitialization() map[string]*Student {
+	if domain := c.trustedDomain(); domain != nil {
+		return domain.studentsByEmail
+	}
+
+	return c.studentsByEmail
+}
+
+func (c *Class) assignmentCategoriesForInitialization() []string {
+	if domain := c.trustedDomain(); domain != nil {
+		return domain.assignmentCategories
+	}
+
+	return c.assignmentCategories
 }
 
 func (c *Class) initializeStudentGradesMap(student *Student, mode classInitMode) {
@@ -61,14 +84,15 @@ func (c *Class) initializeStudentGradesMap(student *Student, mode classInitMode)
 		return
 	}
 
-	if student.GradesByCategory == nil {
-		student.GradesByCategory = make(map[string][]float64, len(c.AssignmentCategories))
+	categories := c.assignmentCategoriesForInitialization()
+	if student.gradesByCategory == nil {
+		student.gradesByCategory = make(map[string][]float64, len(categories))
 	}
-	for _, cat := range c.AssignmentCategories {
-		if _, ok := student.GradesByCategory[cat]; ok {
+	for _, cat := range categories {
+		if _, ok := student.gradesByCategory[cat]; ok {
 			continue
 		}
-		student.GradesByCategory[cat] = make([]float64, 0, 25)
+		student.gradesByCategory[cat] = make([]float64, 0, 25)
 	}
 }
 
@@ -77,13 +101,14 @@ func (c *Class) initializeStudentUnscoredMap(student *Student, mode classInitMod
 		return
 	}
 
-	if student.UnscoredByCategory == nil {
-		student.UnscoredByCategory = make(map[string]int, len(c.AssignmentCategories))
+	categories := c.assignmentCategoriesForInitialization()
+	if student.unscoredByCategory == nil {
+		student.unscoredByCategory = make(map[string]int, len(categories))
 	}
-	for _, cat := range c.AssignmentCategories {
-		if _, ok := student.UnscoredByCategory[cat]; ok {
+	for _, cat := range categories {
+		if _, ok := student.unscoredByCategory[cat]; ok {
 			continue
 		}
-		student.UnscoredByCategory[cat] = 0
+		student.unscoredByCategory[cat] = 0
 	}
 }

@@ -4,8 +4,10 @@ package gradebook
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -51,11 +53,9 @@ type CategoriesByAssignmentType map[string]string
 // AssignmentRecord represents a grade for a particular student on a particular
 // assignment. If AssignmentRecord.Grade is nil, then no score has been
 // recorded yet and the record should not be counted when calculating grades.
-//
-//nolint:govet // JSON field order matters more here than memory alignment.
 type AssignmentRecord struct {
-	Email string   `json:"email"`
 	Grade *float64 `json:"grade"`
+	Email string   `json:"email"`
 }
 
 // AssignmentRecords stores AssignmentRecord structs.
@@ -72,10 +72,10 @@ type Gradebook struct {
 
 // Student represents a student.
 type Student struct {
-	GradesByCategory   map[string][]float64
-	UnscoredByCategory map[string]int
-	FirstName          string `json:"first_name"`
-	LastName           string `json:"last_name"`
+	gradesByCategory   map[string][]float64
+	unscoredByCategory map[string]int
+	firstName          string
+	lastName           string
 }
 
 // StudentsByEmail maps students by their email. (NB: an email is an
@@ -85,22 +85,109 @@ type StudentsByEmail map[string]*Student
 
 // Class represents a class and its students.
 type Class struct {
-	TermsByID                   `json:"terms_by_id"`
-	LabelsByAssignmentCategory  `json:"labels_by_assignment_category"`
-	WeightsByAssignmentCategory `json:"weights_by_assignment_category"`
-	CategoriesByAssignmentType  `json:"categories_by_assignment_type"`
-	StudentsByEmail             `json:"students_by_email"`
-	Name                        string `json:"name"`
-	AssignmentCategories        `json:"assignment_categories"`
+	termsByID                   TermsByID
+	labelsByAssignmentCategory  LabelsByAssignmentCategory
+	weightsByAssignmentCategory WeightsByAssignmentCategory
+	categoriesByAssignmentType  CategoriesByAssignmentType
+	studentsByEmail             StudentsByEmail
+	domain                      *trustedClassDomain
+	name                        string
+	assignmentCategories        AssignmentCategories
+	trusted                     bool
 }
 
-// UnmarshalClass unmarshals a class.json file into a pointer to Class.
-func UnmarshalClass(classFile string) (*Class, error) {
-	return unmarshalClassWithInit(classFile, 0)
+type trustedClassDomain struct {
+	termsByID            map[string]*Term
+	categoriesByType     map[string]string
+	labelsByCategory     map[string]string
+	weightsByCategory    map[string]int
+	studentsByEmail      map[string]*Student
+	assignmentCategories []string
 }
 
-// UnmarshalGradebook unmarshals a gradebook file into a pointer to Gradebook.
-func UnmarshalGradebook(gradebookFile string) (*Gradebook, error) {
+func cloneTermsByID(terms TermsByID) map[string]*Term {
+	if terms == nil {
+		return nil
+	}
+
+	cloned := make(map[string]*Term, len(terms))
+	for id, term := range terms {
+		if term == nil {
+			cloned[id] = nil
+
+			continue
+		}
+
+		cloned[id] = &Term{
+			Start: term.Start,
+			End:   term.End,
+		}
+	}
+
+	return cloned
+}
+
+func cloneGradesByCategory(gradesByCategory map[string][]float64) map[string][]float64 {
+	if gradesByCategory == nil {
+		return nil
+	}
+
+	cloned := make(map[string][]float64, len(gradesByCategory))
+	for category, grades := range gradesByCategory {
+		cloned[category] = slices.Clone(grades)
+	}
+
+	return cloned
+}
+
+func cloneStudent(student *Student) *Student {
+	if student == nil {
+		return nil
+	}
+
+	return &Student{
+		gradesByCategory:   cloneGradesByCategory(student.gradesByCategory),
+		unscoredByCategory: maps.Clone(student.unscoredByCategory),
+		firstName:          student.firstName,
+		lastName:           student.lastName,
+	}
+}
+
+func cloneStudentsByEmail(students map[string]*Student) map[string]*Student {
+	if students == nil {
+		return nil
+	}
+
+	cloned := make(map[string]*Student, len(students))
+	for email, student := range students {
+		cloned[email] = cloneStudent(student)
+	}
+
+	return cloned
+}
+
+func newTrustedClassDomain(c *Class) *trustedClassDomain {
+	if c == nil {
+		return nil
+	}
+
+	return &trustedClassDomain{
+		termsByID:            cloneTermsByID(c.termsByID),
+		assignmentCategories: slices.Clone(c.assignmentCategories),
+		categoriesByType:     maps.Clone(c.categoriesByAssignmentType),
+		labelsByCategory:     maps.Clone(c.labelsByAssignmentCategory),
+		weightsByCategory:    maps.Clone(c.weightsByAssignmentCategory),
+		studentsByEmail:      cloneStudentsByEmail(c.studentsByEmail),
+	}
+}
+
+// ParseClassFile parses a class.json file into a pointer to Class.
+func ParseClassFile(classFile string) (*Class, error) {
+	return parseClassFileWithInit(classFile, 0)
+}
+
+// ParseGradebookFile parses a gradebook file into a pointer to Gradebook.
+func ParseGradebookFile(gradebookFile string) (*Gradebook, error) {
 	data, err := os.ReadFile(filepath.Clean(gradebookFile))
 	if err != nil {
 		return nil, fmt.Errorf("gradebook: read gradebook file %q: %w", gradebookFile, err)
@@ -138,6 +225,7 @@ func dateSnip(name string) (string, error) {
 // a problem reading, unmarshaling, or closing a file.
 func (c *Class) LoadGrades(dir string, term *Term) error {
 	c.initializeStudentMaps(initGrades)
+	defer c.projectTrustedStudentsToCompatibilityFields()
 
 	return c.loadGradebooks(dir, term, false)
 }
@@ -148,8 +236,53 @@ func (c *Class) LoadGrades(dir string, term *Term) error {
 // file.
 func (c *Class) LoadUnscored(dir string, term *Term) error {
 	c.initializeStudentMaps(initUnscored)
+	defer c.projectTrustedStudentsToCompatibilityFields()
 
 	return c.loadGradebooks(dir, term, true)
+}
+
+func (c *Class) trustParsedData() error {
+	domain, err := parseTrustedClassDomain(c)
+	if err != nil {
+		return err
+	}
+
+	c.domain = domain
+	c.trusted = true
+	c.projectTrustedDomainToCompatibilityFields()
+
+	return nil
+}
+
+func (c *Class) projectTrustedDomainToCompatibilityFields() {
+	domain := c.trustedDomain()
+	if domain == nil {
+		return
+	}
+
+	c.termsByID = cloneTermsByID(domain.termsByID)
+	c.assignmentCategories = slices.Clone(domain.assignmentCategories)
+	c.categoriesByAssignmentType = maps.Clone(domain.categoriesByType)
+	c.labelsByAssignmentCategory = maps.Clone(domain.labelsByCategory)
+	c.weightsByAssignmentCategory = maps.Clone(domain.weightsByCategory)
+	c.studentsByEmail = cloneStudentsByEmail(domain.studentsByEmail)
+}
+
+func (c *Class) projectTrustedStudentsToCompatibilityFields() {
+	domain := c.trustedDomain()
+	if domain == nil {
+		return
+	}
+
+	c.studentsByEmail = cloneStudentsByEmail(domain.studentsByEmail)
+}
+
+func (c *Class) trustedDomain() *trustedClassDomain {
+	if c == nil || !c.trusted || c.domain == nil {
+		return nil
+	}
+
+	return c.domain
 }
 
 func (c *Class) loadGradebooks(dir string, term *Term, countUnscored bool) error {
@@ -170,7 +303,7 @@ func (c *Class) loadGradebooks(dir string, term *Term, countUnscored bool) error
 			}
 		}
 
-		if err := c.loadGradebookFile(gradebook, countUnscored); err != nil {
+		if err := c.loadGradebookFile(gradebook, term, countUnscored); err != nil {
 			return err
 		}
 	}
@@ -200,53 +333,115 @@ func gradebookFilesInDir(dir string) ([]string, error) {
 	return gradebooks, nil
 }
 
-func (c *Class) loadGradebookFile(gradebookPath string, countUnscored bool) error {
-	gbData, err := UnmarshalGradebook(gradebookPath)
+func (c *Class) loadGradebookFile(gradebookPath string, term *Term, countUnscored bool) error {
+	parsed, err := c.parseGradebookForLoad(gradebookPath)
 	if err != nil {
 		return err
 	}
 
-	category, err := c.categoryForAssignmentType(gbData.AssignmentType)
-	if err != nil {
-		return err
+	// If term != nil, then we are calculating grades for only some of a class.
+	// In that case, we want to ignore finals since those grades only matter
+	// when we calculate the entire duration of a class.
+	if term != nil && parsed.assignmentType == "final" {
+		return nil
 	}
 
-	for i, ar := range gbData.AssignmentRecords {
-		if ar == nil {
-			return fmt.Errorf("gradebook: nil assignment record at index %d in %q", i, gradebookPath)
-		}
-
-		student, err := c.studentByEmail(ar.Email)
-		if err != nil {
-			return err
-		}
-
+	for _, record := range parsed.records {
 		if countUnscored {
-			if ar.Grade != nil {
+			if record.hasGrade {
 				continue
 			}
-			student.UnscoredByCategory[category]++
+			record.student.unscoredByCategory[parsed.category]++
 
 			continue
 		}
 
-		if ar.Grade == nil {
+		if !record.hasGrade {
 			continue
 		}
 
-		_, ok := student.GradesByCategory[category]
-		if !ok {
-			return fmt.Errorf("gradebook: unrecognized assignment category %q for type %q", category, gbData.AssignmentType)
+		if !c.trusted {
+			if _, ok := record.student.gradesByCategory[parsed.category]; !ok {
+				return fmt.Errorf(
+					"gradebook: unrecognized assignment category %q for type %q",
+					parsed.category,
+					parsed.assignmentType,
+				)
+			}
 		}
 
-		student.GradesByCategory[category] = append(student.GradesByCategory[category], *ar.Grade)
+		record.student.gradesByCategory[parsed.category] = append(
+			record.student.gradesByCategory[parsed.category],
+			record.grade,
+		)
 	}
 
 	return nil
 }
 
+type parsedAssignmentRecord struct {
+	student  *Student
+	hasGrade bool
+	grade    float64
+}
+
+type parsedGradebook struct {
+	assignmentType string
+	category       string
+	records        []parsedAssignmentRecord
+}
+
+func (c *Class) parseGradebookForLoad(gradebookPath string) (*parsedGradebook, error) {
+	gbData, err := ParseGradebookFile(gradebookPath)
+	if err != nil {
+		return nil, err
+	}
+
+	category, err := c.categoryForAssignmentType(gbData.AssignmentType)
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]parsedAssignmentRecord, 0, len(gbData.AssignmentRecords))
+	for i, ar := range gbData.AssignmentRecords {
+		if ar == nil {
+			return nil, fmt.Errorf("gradebook: nil assignment record at index %d in %q", i, gradebookPath)
+		}
+
+		student, err := c.studentByEmail(ar.Email)
+		if err != nil {
+			return nil, err
+		}
+
+		record := parsedAssignmentRecord{student: student}
+		if ar.Grade != nil {
+			record.hasGrade = true
+			record.grade = *ar.Grade
+		}
+		records = append(records, record)
+	}
+
+	return &parsedGradebook{
+		assignmentType: gbData.AssignmentType,
+		category:       category,
+		records:        records,
+	}, nil
+}
+
 func (c *Class) studentByEmail(email string) (*Student, error) {
-	student, ok := c.StudentsByEmail[email]
+	if domain := c.trustedDomain(); domain != nil {
+		student, ok := domain.studentsByEmail[email]
+		if !ok {
+			return nil, fmt.Errorf("gradebook: no student with email %q", email)
+		}
+		if student == nil {
+			return nil, fmt.Errorf("gradebook: student with email %q is nil", email)
+		}
+
+		return student, nil
+	}
+
+	student, ok := c.studentsByEmail[email]
 	if !ok {
 		return nil, fmt.Errorf("gradebook: no student with email %q", email)
 	}
@@ -258,7 +453,16 @@ func (c *Class) studentByEmail(email string) (*Student, error) {
 }
 
 func (c *Class) categoryForAssignmentType(assignmentType string) (string, error) {
-	category, ok := c.CategoriesByAssignmentType[assignmentType]
+	if domain := c.trustedDomain(); domain != nil {
+		category, ok := domain.categoriesByType[assignmentType]
+		if !ok {
+			return "", fmt.Errorf("gradebook: unrecognized assignment type %q", assignmentType)
+		}
+
+		return category, nil
+	}
+
+	category, ok := c.AssignmentCategoryForType(assignmentType)
 	if !ok {
 		return "", fmt.Errorf("gradebook: unrecognized assignment type %q", assignmentType)
 	}

@@ -117,3 +117,16 @@ below for more details about both of these filetypes.)
   + `weights_by_assignment_category`
   + `categories_by_assignment_type`
 + `weights_by_assignment_category` values must sum to exactly 100
+
+### Class invariants and canonical semantics
+
++ Parsed classes validate class invariants during parse.
++ Manual class construction uses `BuildClass` with `ClassSpec` input.
++ Invariant failures from parse and `BuildClass` return `InvalidClassError`.
++ Parsed and built classes maintain an internal trusted canonical domain for
+  lookup, sorting, and grade loading.
++ `Class` and `Student` runtime fields are unexported.
++ Public access is via view/accessor methods that return defensive copies for
+  maps, slices, and student collections.
++ External mutation of returned view data does not change internal canonical
+  state.

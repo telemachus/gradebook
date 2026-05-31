@@ -1,67 +1,66 @@
-package gradebook_test
+package gradebook
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/telemachus/gradebook"
 )
 
-func testStudent(firstName, lastName string) *gradebook.Student {
-	return &gradebook.Student{
-		FirstName: firstName,
-		LastName:  lastName,
+func testStudent(firstName, lastName string) *Student {
+	return &Student{
+		firstName: firstName,
+		lastName:  lastName,
 	}
 }
 
 var studentsSortedByNameCases = map[string]struct {
-	students map[string]*gradebook.Student
-	want     []*gradebook.Student
+	students map[string]*Student
+	want     []*Student
 }{
 	"empty class returns empty slice": {
-		students: map[string]*gradebook.Student{},
-		want:     []*gradebook.Student{},
+		students: map[string]*Student{},
+		want:     []*Student{},
 	},
 	"single student returns single student": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"alice@example.com": testStudent("Alice", "Anderson"),
 		},
-		want: []*gradebook.Student{
+		want: []*Student{
 			testStudent("Alice", "Anderson"),
 		},
 	},
 	"multiple students sorted by last name": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"charlie@example.com": testStudent("Charlie", "Chen"),
 			"alice@example.com":   testStudent("Alice", "Anderson"),
 			"bob@example.com":     testStudent("Bob", "Baker"),
 		},
-		want: []*gradebook.Student{
+		want: []*Student{
 			testStudent("Alice", "Anderson"),
 			testStudent("Bob", "Baker"),
 			testStudent("Charlie", "Chen"),
 		},
 	},
 	"same last name sorted by first name": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"bob.smith@example.com":     testStudent("Bob", "Smith"),
 			"alice.smith@example.com":   testStudent("Alice", "Smith"),
 			"charlie.smith@example.com": testStudent("Charlie", "Smith"),
 		},
-		want: []*gradebook.Student{
+		want: []*Student{
 			testStudent("Alice", "Smith"),
 			testStudent("Bob", "Smith"),
 			testStudent("Charlie", "Smith"),
 		},
 	},
 	"mixed sorting - last name priority, then first name": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"bob.young@example.com":      testStudent("Bob", "Young"),
 			"alice.young@example.com":    testStudent("Alice", "Young"),
 			"charlie.smith@example.com":  testStudent("Charlie", "Smith"),
 			"david.anderson@example.com": testStudent("David", "Anderson"),
 		},
-		want: []*gradebook.Student{
+		want: []*Student{
 			testStudent("David", "Anderson"),
 			testStudent("Charlie", "Smith"),
 			testStudent("Alice", "Young"),
@@ -77,13 +76,13 @@ func TestStudentsSortedByName(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			class := &gradebook.Class{
-				StudentsByEmail: tt.students,
+			class := &Class{
+				studentsByEmail: tt.students,
 			}
 
 			got := class.StudentsSortedByName()
 
-			if diff := cmp.Diff(tt.want, got); diff != "" {
+			if diff := cmp.Diff(tt.want, got, cmp.AllowUnexported(Student{})); diff != "" {
 				t.Errorf("StudentsSortedByName() mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -91,21 +90,21 @@ func TestStudentsSortedByName(t *testing.T) {
 }
 
 var emailsSortedByNameCases = map[string]struct {
-	students map[string]*gradebook.Student
+	students map[string]*Student
 	want     []string
 }{
 	"empty class returns empty slice": {
-		students: map[string]*gradebook.Student{},
+		students: map[string]*Student{},
 		want:     []string{},
 	},
 	"single student returns single email": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"alice@example.com": testStudent("Alice", "Anderson"),
 		},
 		want: []string{"alice@example.com"},
 	},
 	"multiple students sorted by last name": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"charlie@example.com": testStudent("Charlie", "Chen"),
 			"alice@example.com":   testStudent("Alice", "Anderson"),
 			"bob@example.com":     testStudent("Bob", "Baker"),
@@ -117,7 +116,7 @@ var emailsSortedByNameCases = map[string]struct {
 		},
 	},
 	"same last name sorted by first name": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"bob.smith@example.com":     testStudent("Bob", "Smith"),
 			"alice.smith@example.com":   testStudent("Alice", "Smith"),
 			"charlie.smith@example.com": testStudent("Charlie", "Smith"),
@@ -129,7 +128,7 @@ var emailsSortedByNameCases = map[string]struct {
 		},
 	},
 	"mixed sorting - last name priority, then first name": {
-		students: map[string]*gradebook.Student{
+		students: map[string]*Student{
 			"bob.young@example.com":      testStudent("Bob", "Young"),
 			"alice.young@example.com":    testStudent("Alice", "Young"),
 			"charlie.smith@example.com":  testStudent("Charlie", "Smith"),
@@ -151,8 +150,8 @@ func TestEmailsSortedByStudentName(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			class := &gradebook.Class{
-				StudentsByEmail: tt.students,
+			class := &Class{
+				studentsByEmail: tt.students,
 			}
 
 			got := class.EmailsSortedByStudentName()
@@ -169,25 +168,25 @@ func TestAssignmentCategoriesSortedByLabel(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		categories gradebook.AssignmentCategories
-		labels     gradebook.LabelsByAssignmentCategory
+		categories AssignmentCategories
+		labels     LabelsByAssignmentCategory
 		want       []string
 	}{
 		"empty categories returns empty slice": {
-			categories: gradebook.AssignmentCategories{},
-			labels:     gradebook.LabelsByAssignmentCategory{},
+			categories: AssignmentCategories{},
+			labels:     LabelsByAssignmentCategory{},
 			want:       []string{},
 		},
 		"single category returns single category": {
-			categories: gradebook.AssignmentCategories{"major"},
-			labels: gradebook.LabelsByAssignmentCategory{
+			categories: AssignmentCategories{"major"},
+			labels: LabelsByAssignmentCategory{
 				"major": "Major Assessments",
 			},
 			want: []string{"major"},
 		},
 		"multiple categories sorted by label": {
-			categories: gradebook.AssignmentCategories{"major", "cp", "minor"},
-			labels: gradebook.LabelsByAssignmentCategory{
+			categories: AssignmentCategories{"major", "cp", "minor"},
+			labels: LabelsByAssignmentCategory{
 				"major": "Major Assessments",
 				"minor": "Daily Work",
 				"cp":    "Class Participation",
@@ -195,8 +194,8 @@ func TestAssignmentCategoriesSortedByLabel(t *testing.T) {
 			want: []string{"cp", "minor", "major"},
 		},
 		"categories with same label prefix sorted alphabetically": {
-			categories: gradebook.AssignmentCategories{"quiz", "exam", "project"},
-			labels: gradebook.LabelsByAssignmentCategory{
+			categories: AssignmentCategories{"quiz", "exam", "project"},
+			labels: LabelsByAssignmentCategory{
 				"quiz":    "Assessment: Quiz",
 				"exam":    "Assessment: Exam",
 				"project": "Assessment: Project",
@@ -204,8 +203,8 @@ func TestAssignmentCategoriesSortedByLabel(t *testing.T) {
 			want: []string{"exam", "project", "quiz"},
 		},
 		"mixed label sorting": {
-			categories: gradebook.AssignmentCategories{"final", "hw", "participation", "midterm"},
-			labels: gradebook.LabelsByAssignmentCategory{
+			categories: AssignmentCategories{"final", "hw", "participation", "midterm"},
+			labels: LabelsByAssignmentCategory{
 				"final":         "Final Exam",
 				"hw":            "Homework",
 				"participation": "Class Participation",
@@ -219,9 +218,9 @@ func TestAssignmentCategoriesSortedByLabel(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			class := &gradebook.Class{
-				AssignmentCategories:       tt.categories,
-				LabelsByAssignmentCategory: tt.labels,
+			class := &Class{
+				assignmentCategories:       tt.categories,
+				labelsByAssignmentCategory: tt.labels,
 			}
 
 			got := class.AssignmentCategoriesSortedByLabel()

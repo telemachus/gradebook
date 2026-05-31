@@ -12,5 +12,5 @@ func NewStudent(firstName, lastName string) (*Student, error) {
 		return nil, errors.New("gradebook: last name cannot be empty")
 	}
 
-	return &Student{FirstName: firstName, LastName: lastName}, nil
+	return &Student{firstName: firstName, lastName: lastName}, nil
 }

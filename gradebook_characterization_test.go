@@ -1,12 +1,10 @@
-package gradebook_test
+package gradebook
 
 import (
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/telemachus/gradebook"
 )
 
 func TestLoadGradesSkipsNullGrades(t *testing.T) {
@@ -40,14 +38,14 @@ func TestLoadGradesSkipsNullGrades(t *testing.T) {
 		t.Fatalf("LoadGrades(%q, nil) returned error: %v", dir, err)
 	}
 
-	if got := len(class.StudentsByEmail["gstriker@school.edu"].GradesByCategory["minor"]); got != 1 {
+	if got := len(class.studentsByEmail["gstriker@school.edu"].gradesByCategory["minor"]); got != 1 {
 		t.Fatalf("expected one non-null grade for gstriker@school.edu, got %d", got)
 	}
-	if got := class.StudentsByEmail["gstriker@school.edu"].GradesByCategory["minor"][0]; got != 92 {
+	if got := class.studentsByEmail["gstriker@school.edu"].gradesByCategory["minor"][0]; got != 92 {
 		t.Fatalf("expected gstriker@school.edu minor grade to be 92, got %v", got)
 	}
 
-	if got := len(class.StudentsByEmail["gfine@school.edu"].GradesByCategory["minor"]); got != 0 {
+	if got := len(class.studentsByEmail["gfine@school.edu"].gradesByCategory["minor"]); got != 0 {
 		t.Fatalf("expected null grade to be skipped for gfine@school.edu, got %d loaded grades", got)
 	}
 }
@@ -111,37 +109,37 @@ func TestLoadGradesUsesTypeToCategoryMapping(t *testing.T) {
 		t.Fatalf("LoadGrades(%q, nil) returned error: %v", dir, err)
 	}
 
-	if got := len(class.StudentsByEmail["gstriker@school.edu"].GradesByCategory["minor"]); got != 1 {
+	if got := len(class.studentsByEmail["gstriker@school.edu"].gradesByCategory["minor"]); got != 1 {
 		t.Fatalf("expected grade to be loaded into \"minor\" via assignment_type mapping, got %d", got)
 	}
-	if got := len(class.StudentsByEmail["gstriker@school.edu"].GradesByCategory["major"]); got != 0 {
+	if got := len(class.studentsByEmail["gstriker@school.edu"].gradesByCategory["major"]); got != 0 {
 		t.Fatalf("expected no grade in \"major\" category, got %d", got)
 	}
 }
 
-func TestLoadGradesWithUnmarshalClassInitializesStudentMaps(t *testing.T) {
+func TestLoadGradesWithParseClassFileInitializesStudentMaps(t *testing.T) {
 	t.Parallel()
 
-	class, err := gradebook.UnmarshalClass(classJSON)
+	class, err := ParseClassFile(classJSON)
 	if err != nil {
-		t.Fatalf("UnmarshalClass(%q) returned error: %v", classJSON, err)
+		t.Fatalf("ParseClassFile(%q) returned error: %v", classJSON, err)
 	}
 
 	if err := class.LoadGrades("testdata/validgradebooks", nil); err != nil {
 		t.Fatalf("LoadGrades should initialize grade maps on demand: %v", err)
 	}
 
-	if got := len(class.StudentsByEmail["gstriker@school.edu"].GradesByCategory["minor"]); got == 0 {
-		t.Fatal("expected grades to load when class is created with UnmarshalClass")
+	if got := len(class.studentsByEmail["gstriker@school.edu"].gradesByCategory["minor"]); got == 0 {
+		t.Fatal("expected grades to load when class is created with ParseClassFile")
 	}
 }
 
-func TestLoadUnscoredWithUnmarshalClassInitializesStudentMaps(t *testing.T) {
+func TestLoadUnscoredWithParseClassFileInitializesStudentMaps(t *testing.T) {
 	t.Parallel()
 
-	class, err := gradebook.UnmarshalClass(classJSON)
+	class, err := ParseClassFile(classJSON)
 	if err != nil {
-		t.Fatalf("UnmarshalClass(%q) returned error: %v", classJSON, err)
+		t.Fatalf("ParseClassFile(%q) returned error: %v", classJSON, err)
 	}
 
 	if err := class.LoadUnscored("testdata/validgradebooks", nil); err != nil {
@@ -177,13 +175,13 @@ func TestLoadUnscoredWithUnmarshalClassInitializesStudentMaps(t *testing.T) {
 	}
 
 	for email, wantByCategory := range want {
-		student := class.StudentsByEmail[email]
+		student := class.studentsByEmail[email]
 		if student == nil {
 			t.Fatalf("student %q not found", email)
 		}
 
 		for category, wantCount := range wantByCategory {
-			gotCount := student.UnscoredByCategory[category]
+			gotCount := student.unscoredByCategory[category]
 			if gotCount != wantCount {
 				t.Fatalf(
 					"UnscoredByCategory[%q][%q] = %d; want %d",
@@ -200,9 +198,9 @@ func TestLoadUnscoredWithUnmarshalClassInitializesStudentMaps(t *testing.T) {
 func TestLoadUnscoredNoDirectoryReturnsError(t *testing.T) {
 	t.Parallel()
 
-	class, err := gradebook.UnmarshalClass(classJSON)
+	class, err := ParseClassFile(classJSON)
 	if err != nil {
-		t.Fatalf("UnmarshalClass(%q) returned error: %v", classJSON, err)
+		t.Fatalf("ParseClassFile(%q) returned error: %v", classJSON, err)
 	}
 
 	err = class.LoadUnscored("testdata/does-not-exist", nil)
@@ -215,7 +213,7 @@ func TestLoadGradesNilStudentReturnsError(t *testing.T) {
 	t.Parallel()
 
 	class := fakeCalcClass()
-	class.StudentsByEmail["gstriker@school.edu"] = nil
+	class.studentsByEmail["gstriker@school.edu"] = nil
 	dir := t.TempDir()
 
 	gradebookData := `{
@@ -297,12 +295,93 @@ func TestLoadGradesWithUnicodePrefixAndTermFilter(t *testing.T) {
 		t.Fatalf("failed writing gradebook fixture: %v", err)
 	}
 
-	term := &gradebook.Term{Start: "20240301", End: "20240331"}
+	term := &Term{Start: "20240301", End: "20240331"}
 	if err := class.LoadGrades(dir, term); err != nil {
 		t.Fatalf("LoadGrades with unicode filename prefix should succeed: %v", err)
 	}
 
-	if got := len(class.StudentsByEmail["gstriker@school.edu"].GradesByCategory["minor"]); got != 1 {
+	if got := len(class.studentsByEmail["gstriker@school.edu"].gradesByCategory["minor"]); got != 1 {
 		t.Fatalf("expected one loaded grade, got %d", got)
+	}
+}
+
+func writeFinalAndQuizFixtures(t *testing.T) string {
+	t.Helper()
+
+	quizData := `{
+    "assignment_date": "20210405",
+    "assignment_name": "q4-quiz",
+    "assignment_type": "quiz",
+    "assignment_category": "minor",
+    "assignment_records": [
+        {
+            "email": "gstriker@school.edu",
+            "grade": 88
+        }
+    ]
+}`
+
+	finalData := `{
+    "assignment_date": "20210608",
+    "assignment_name": "year-final",
+    "assignment_type": "final",
+    "assignment_category": "major",
+    "assignment_records": [
+        {
+            "email": "gstriker@school.edu",
+            "grade": 95
+        }
+    ]
+}`
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "quiz-q4-quiz-20210405.gradebook"), []byte(quizData), 0o644); err != nil {
+		t.Fatalf("failed writing quiz fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "final-year-final-20210608.gradebook"), []byte(finalData), 0o644); err != nil {
+		t.Fatalf("failed writing final fixture: %v", err)
+	}
+
+	return dir
+}
+
+func TestLoadGradesTermExcludesFinal(t *testing.T) {
+	t.Parallel()
+
+	dir := writeFinalAndQuizFixtures(t)
+	class := fakeCalcClass()
+	class.categoriesByAssignmentType["final"] = "major"
+
+	q4 := &Term{Start: "20210328", End: "20210609"}
+	if err := class.LoadGrades(dir, q4); err != nil {
+		t.Fatalf("LoadGrades(%q, q4) returned error: %v", dir, err)
+	}
+
+	student := class.studentsByEmail["gstriker@school.edu"]
+	if got := len(student.gradesByCategory["minor"]); got != 1 {
+		t.Fatalf("expected the quiz grade to load, got %d minor grades", got)
+	}
+	if got := len(student.gradesByCategory["major"]); got != 0 {
+		t.Fatalf("expected the final to be excluded when a term is set, got %d major grades", got)
+	}
+}
+
+func TestLoadGradesNilTermIncludesFinal(t *testing.T) {
+	t.Parallel()
+
+	dir := writeFinalAndQuizFixtures(t)
+	class := fakeCalcClass()
+	class.categoriesByAssignmentType["final"] = "major"
+
+	if err := class.LoadGrades(dir, nil); err != nil {
+		t.Fatalf("LoadGrades(%q, nil) returned error: %v", dir, err)
+	}
+
+	student := class.studentsByEmail["gstriker@school.edu"]
+	if got := len(student.gradesByCategory["minor"]); got != 1 {
+		t.Fatalf("expected the quiz grade to load, got %d minor grades", got)
+	}
+	if got := len(student.gradesByCategory["major"]); got != 1 {
+		t.Fatalf("expected the final to be included when term is nil, got %d major grades", got)
 	}
 }

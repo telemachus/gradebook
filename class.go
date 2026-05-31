@@ -6,16 +6,54 @@ import (
 	"slices"
 )
 
+func (c *Class) assignmentCategoriesForSorting() []string {
+	if c == nil {
+		return nil
+	}
+
+	if domain := c.trustedDomain(); domain != nil {
+		return domain.assignmentCategories
+	}
+
+	return c.assignmentCategories
+}
+
+func (c *Class) labelsByCategoryForSorting() map[string]string {
+	if c == nil {
+		return nil
+	}
+
+	if domain := c.trustedDomain(); domain != nil {
+		return domain.labelsByCategory
+	}
+
+	return c.labelsByAssignmentCategory
+}
+
+func (c *Class) studentsByEmailForSorting() map[string]*Student {
+	if c == nil {
+		return nil
+	}
+
+	if domain := c.trustedDomain(); domain != nil {
+		return domain.studentsByEmail
+	}
+
+	return c.studentsByEmail
+}
+
 // AssignmentCategoriesSortedByLabel returns a slice of categories sorted by label.
 func (c *Class) AssignmentCategoriesSortedByLabel() []string {
-	if len(c.AssignmentCategories) == 0 {
+	categories := c.assignmentCategoriesForSorting()
+	if len(categories) == 0 {
 		return []string{}
 	}
 
-	categories := slices.Clone(c.AssignmentCategories)
+	labelsByCategory := c.labelsByCategoryForSorting()
+	categories = slices.Clone(categories)
 	slices.SortFunc(categories, func(catA, catB string) int {
-		labelA := c.LabelsByAssignmentCategory[catA]
-		labelB := c.LabelsByAssignmentCategory[catB]
+		labelA := labelsByCategory[catA]
+		labelB := labelsByCategory[catB]
 
 		return cmp.Compare(labelA, labelB)
 	})
@@ -25,14 +63,15 @@ func (c *Class) AssignmentCategoriesSortedByLabel() []string {
 
 // EmailsSortedByStudentName returns a slice of student emails sorted by student name.
 func (c *Class) EmailsSortedByStudentName() []string {
-	if len(c.StudentsByEmail) == 0 {
+	studentsByEmail := c.studentsByEmailForSorting()
+	if len(studentsByEmail) == 0 {
 		return []string{}
 	}
 
-	emails := slices.Collect(maps.Keys(c.StudentsByEmail))
+	emails := slices.Collect(maps.Keys(studentsByEmail))
 	slices.SortFunc(emails, func(emailA, emailB string) int {
-		studentA := c.StudentsByEmail[emailA]
-		studentB := c.StudentsByEmail[emailB]
+		studentA := studentsByEmail[emailA]
+		studentB := studentsByEmail[emailB]
 
 		return cmpStudent(studentA, studentB)
 	})
@@ -42,19 +81,29 @@ func (c *Class) EmailsSortedByStudentName() []string {
 
 // StudentsSortedByName returns a slice of students sorted by last and first name.
 func (c *Class) StudentsSortedByName() []*Student {
-	students := make([]*Student, 0, len(c.StudentsByEmail))
-	for _, student := range c.StudentsByEmail {
+	studentsByEmail := c.studentsByEmailForSorting()
+	students := make([]*Student, 0, len(studentsByEmail))
+	for _, student := range studentsByEmail {
 		students = append(students, student)
 	}
 	slices.SortFunc(students, cmpStudent)
+
+	if c.trustedDomain() != nil {
+		cloned := make([]*Student, 0, len(students))
+		for _, student := range students {
+			cloned = append(cloned, cloneStudent(student))
+		}
+
+		return cloned
+	}
 
 	return students
 }
 
 func cmpStudent(studentA, studentB *Student) int {
-	if studentA.LastName == studentB.LastName {
-		return cmp.Compare(studentA.FirstName, studentB.FirstName)
+	if studentA.lastName == studentB.lastName {
+		return cmp.Compare(studentA.firstName, studentB.firstName)
 	}
 
-	return cmp.Compare(studentA.LastName, studentB.LastName)
+	return cmp.Compare(studentA.lastName, studentB.lastName)
 }

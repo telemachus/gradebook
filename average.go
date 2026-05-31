@@ -26,11 +26,11 @@ func (ar AverageResult) String() string {
 // method returns an error. If the slice of scores is empty, the method returns
 // an invalid AverageResult.
 func (s *Student) Average(category string) AverageResult {
-	if len(s.GradesByCategory[category]) == 0 {
+	if len(s.gradesByCategory[category]) == 0 {
 		return AverageResult{Valid: false}
 	}
 
-	return AverageResult{Value: fmean(s.GradesByCategory[category]), Valid: true}
+	return AverageResult{Value: fmean(s.gradesByCategory[category]), Valid: true}
 }
 
 // TotalAverage returns an AverageResult and error for all of a student's

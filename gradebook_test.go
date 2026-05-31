@@ -1,4 +1,4 @@
-package gradebook_test
+package gradebook
 
 import (
 	"math"
@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/telemachus/gradebook"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 var (
@@ -19,77 +19,87 @@ var (
 	gradebookInvalidJSON = "testdata/quiz-invalid-20240319.gradebook"
 )
 
-func TestUnmarshalClass(t *testing.T) {
+func TestParseClassFileEqualMock(t *testing.T) {
 	t.Parallel()
 
 	want := fakeClass()
-	got, err := gradebook.UnmarshalClass(classJSON)
+	got, err := ParseClassFile(classJSON)
 	if err != nil {
-		t.Fatalf("gradebook.UnmarshalClass(classJSON) = %v; want nil error", err)
+		t.Fatalf("ParseClassFile(classJSON) = %v; want nil error", err)
 	}
 
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("gradebook.UnmarshalClass(classJSON) mismatch(-want +got):\n%s", diff)
+	if diff := cmp.Diff(
+		want,
+		got,
+		cmpopts.IgnoreFields(Class{}, "trusted", "domain"),
+		cmp.AllowUnexported(Class{}, Student{}),
+	); diff != "" {
+		t.Errorf("ParseClassFile(classJSON) mismatch(-want +got):\n%s", diff)
 	}
 }
 
-func TestUnmarshalClassUnequal(t *testing.T) {
+func TestParseClassFileUnequal(t *testing.T) {
 	t.Parallel()
 
 	want := fakeClass()
-	got, err := gradebook.UnmarshalClass(classUnequalJSON)
+	got, err := ParseClassFile(classUnequalJSON)
 	if err != nil {
-		t.Fatalf("gradebook.UnmarshalClass(classUnequalJSON) = %v; want nil error", err)
+		t.Fatalf("ParseClassFile(classUnequalJSON) = %v; want nil error", err)
 	}
 
-	if cmp.Equal(want, got) {
-		t.Error("gradebook.UnmarshalClass(classUnequalJSON) should differ from the mock class, but it does not")
+	if cmp.Equal(
+		want,
+		got,
+		cmpopts.IgnoreFields(Class{}, "trusted", "domain"),
+		cmp.AllowUnexported(Class{}, Student{}),
+	) {
+		t.Error("ParseClassFile(classUnequalJSON) should differ from the mock class, but it does not")
 	}
 }
 
-func TestUnmarshalClassInvalid(t *testing.T) {
+func TestParseClassFileInvalid(t *testing.T) {
 	t.Parallel()
 
-	_, err := gradebook.UnmarshalClass(classInvalidJSON)
+	_, err := ParseClassFile(classInvalidJSON)
 	if err == nil {
 		t.Fatal("want error; got nil")
 	}
 }
 
-func TestUnmarshalGradebook(t *testing.T) {
+func TestParseGradebookFileEqualMock(t *testing.T) {
 	t.Parallel()
 
 	want := fakeGradebook()
-	got, err := gradebook.UnmarshalGradebook(gradebookJSON)
+	got, err := ParseGradebookFile(gradebookJSON)
 	if err != nil {
-		t.Fatalf("gradebook.UnmarshalGradebook(gradebookJSON) = %v; want nil error", err)
+		t.Fatalf("ParseGradebookFile(gradebookJSON) = %v; want nil error", err)
 	}
 
 	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("gradebook.UnmarshalGradebook(gradebookJSON) mismatch(-want +got):\n%s", diff)
+		t.Errorf("ParseGradebookFile(gradebookJSON) mismatch(-want +got):\n%s", diff)
 	}
 }
 
-func TestUnmarshalGradebookUnequal(t *testing.T) {
+func TestParseGradebookFileUnequal(t *testing.T) {
 	t.Parallel()
 
 	want := fakeGradebook()
-	got, err := gradebook.UnmarshalGradebook(gradebookUnequalJSON)
+	got, err := ParseGradebookFile(gradebookUnequalJSON)
 	if err != nil {
-		t.Fatalf("gradebook.UnmarshalGradebook(gradebookUnequalJSON) = %v; want nil error", err)
+		t.Fatalf("ParseGradebookFile(gradebookUnequalJSON) = %v; want nil error", err)
 	}
 
 	if cmp.Equal(want, got) {
-		t.Error("gradebook.UnmarshalGradebook(gradebookUnequalJSON) should differ from the mock class, but it does not")
+		t.Error("ParseGradebookFile(gradebookUnequalJSON) should differ from the mock class, but it does not")
 	}
 }
 
-func TestUnmarshalGradebookInvalid(t *testing.T) {
+func TestParseGradebookFileInvalid(t *testing.T) {
 	t.Parallel()
 
-	_, err := gradebook.UnmarshalGradebook(gradebookInvalidJSON)
+	_, err := ParseGradebookFile(gradebookInvalidJSON)
 	if err == nil {
-		t.Fatalf("gradebook.UnmarshalGradebook(%q) should error; got nil", gradebookInvalidJSON)
+		t.Fatalf("ParseGradebookFile(%q) should error; got nil", gradebookInvalidJSON)
 	}
 }
 
@@ -157,20 +167,20 @@ func TestLoadGradesNonexistentDirectory(t *testing.T) {
 	}
 }
 
-func fakeCalcClass() *gradebook.Class {
-	return &gradebook.Class{
-		Name:                        "Lucretius",
-		TermsByID:                   fakeTermsByID(),
-		AssignmentCategories:        fakeAssignmentCategories(),
-		LabelsByAssignmentCategory:  fakeLabelsByAssignmentCategory(),
-		WeightsByAssignmentCategory: fakeWeightsByAssignmentCategory(),
-		CategoriesByAssignmentType:  fakeCategoriesByAssignmentType(),
-		StudentsByEmail:             fakeCalcStudentsByEmail(),
+func fakeCalcClass() *Class {
+	return &Class{
+		name:                        "Lucretius",
+		termsByID:                   fakeTermsByID(),
+		assignmentCategories:        fakeAssignmentCategories(),
+		labelsByAssignmentCategory:  fakeLabelsByAssignmentCategory(),
+		weightsByAssignmentCategory: fakeWeightsByAssignmentCategory(),
+		categoriesByAssignmentType:  fakeCategoriesByAssignmentType(),
+		studentsByEmail:             fakeCalcStudentsByEmail(),
 	}
 }
 
-func fakeTermsByID() map[string]*gradebook.Term {
-	return map[string]*gradebook.Term{
+func fakeTermsByID() map[string]*Term {
+	return map[string]*Term{
 		"q1": {
 			Start: "20200910",
 			End:   "20201103",
@@ -198,28 +208,28 @@ func fakeTermsByID() map[string]*gradebook.Term {
 	}
 }
 
-func fakeAssignmentCategories() gradebook.AssignmentCategories {
-	return gradebook.AssignmentCategories{"major", "minor", "cp"}
+func fakeAssignmentCategories() AssignmentCategories {
+	return AssignmentCategories{"major", "minor", "cp"}
 }
 
-func fakeLabelsByAssignmentCategory() gradebook.LabelsByAssignmentCategory {
-	return gradebook.LabelsByAssignmentCategory{
+func fakeLabelsByAssignmentCategory() LabelsByAssignmentCategory {
+	return LabelsByAssignmentCategory{
 		"major": "Major assessments",
 		"minor": "Daily work and quizzes",
 		"cp":    "Class participation",
 	}
 }
 
-func fakeWeightsByAssignmentCategory() gradebook.WeightsByAssignmentCategory {
-	return gradebook.WeightsByAssignmentCategory{
+func fakeWeightsByAssignmentCategory() WeightsByAssignmentCategory {
+	return WeightsByAssignmentCategory{
 		"major": 30,
 		"minor": 40,
 		"cp":    30,
 	}
 }
 
-func fakeCategoriesByAssignmentType() gradebook.CategoriesByAssignmentType {
-	return gradebook.CategoriesByAssignmentType{
+func fakeCategoriesByAssignmentType() CategoriesByAssignmentType {
+	return CategoriesByAssignmentType{
 		"test":    "major",
 		"project": "major",
 		"essay":   "major",
@@ -229,91 +239,91 @@ func fakeCategoriesByAssignmentType() gradebook.CategoriesByAssignmentType {
 	}
 }
 
-func fakeStudentsByEmail() gradebook.StudentsByEmail {
-	return gradebook.StudentsByEmail{
-		"gstriker@school.edu": &gradebook.Student{
-			FirstName: "Gisela",
-			LastName:  "Striker",
+func fakeStudentsByEmail() StudentsByEmail {
+	return StudentsByEmail{
+		"gstriker@school.edu": &Student{
+			firstName: "Gisela",
+			lastName:  "Striker",
 		},
-		"mfrede@school.edu": &gradebook.Student{
-			FirstName: "Michael",
-			LastName:  "Frede",
+		"mfrede@school.edu": &Student{
+			firstName: "Michael",
+			lastName:  "Frede",
 		},
-		"jannas@school.edu": &gradebook.Student{
-			FirstName: "Julia",
-			LastName:  "Annas",
+		"jannas@school.edu": &Student{
+			firstName: "Julia",
+			lastName:  "Annas",
 		},
-		"agomezlobo@school.edu": &gradebook.Student{
-			FirstName: "Alfonso",
-			LastName:  "Gómez-Lobo",
+		"agomezlobo@school.edu": &Student{
+			firstName: "Alfonso",
+			lastName:  "Gómez-Lobo",
 		},
-		"gfine@school.edu": &gradebook.Student{
-			FirstName: "Gail",
-			LastName:  "Fine",
+		"gfine@school.edu": &Student{
+			firstName: "Gail",
+			lastName:  "Fine",
 		},
 	}
 }
 
-func fakeCalcStudentsByEmail() gradebook.StudentsByEmail {
+func fakeCalcStudentsByEmail() StudentsByEmail {
 	students := fakeStudentsByEmail()
 	for _, student := range students {
-		student.GradesByCategory = fakeGradesMap()
+		student.gradesByCategory = fakeGradesMap()
 	}
 
 	return students
 }
 
-func fakeGradebook() *gradebook.Gradebook {
-	return &gradebook.Gradebook{
+func fakeGradebook() *Gradebook {
+	return &Gradebook{
 		AssignmentCategory: "minor",
 		AssignmentDate:     "20240319",
 		AssignmentName:     "golden",
 		AssignmentType:     "quiz",
-		AssignmentRecords: gradebook.AssignmentRecords{
-			&gradebook.AssignmentRecord{
+		AssignmentRecords: AssignmentRecords{
+			&AssignmentRecord{
 				Email: "gstriker@school.edu",
 				Grade: floatPtr(94.2),
 			},
-			&gradebook.AssignmentRecord{
+			&AssignmentRecord{
 				Email: "mfrede@school.edu",
 				Grade: floatPtr(94.0),
 			},
-			&gradebook.AssignmentRecord{
+			&AssignmentRecord{
 				Email: "jannas@school.edu",
 				Grade: floatPtr(104),
 			},
-			&gradebook.AssignmentRecord{
+			&AssignmentRecord{
 				Email: "agomezlobo@school.edu",
 				Grade: floatPtr(81),
 			},
-			&gradebook.AssignmentRecord{
+			&AssignmentRecord{
 				Email: "gfine@school.edu",
 			},
 		},
 	}
 }
 
-func fakeClass() *gradebook.Class {
-	return &gradebook.Class{
-		Name:                        "Lucretius",
-		TermsByID:                   fakeTermsByID(),
-		AssignmentCategories:        fakeAssignmentCategories(),
-		LabelsByAssignmentCategory:  fakeLabelsByAssignmentCategory(),
-		WeightsByAssignmentCategory: fakeWeightsByAssignmentCategory(),
-		CategoriesByAssignmentType:  fakeCategoriesByAssignmentType(),
-		StudentsByEmail:             fakeStudentsByEmail(),
+func fakeClass() *Class {
+	return &Class{
+		name:                        "Lucretius",
+		termsByID:                   fakeTermsByID(),
+		assignmentCategories:        fakeAssignmentCategories(),
+		labelsByAssignmentCategory:  fakeLabelsByAssignmentCategory(),
+		weightsByAssignmentCategory: fakeWeightsByAssignmentCategory(),
+		categoriesByAssignmentType:  fakeCategoriesByAssignmentType(),
+		studentsByEmail:             fakeStudentsByEmail(),
 	}
 }
 
 func TestStudentAverage(t *testing.T) {
 	t.Parallel()
 
-	student, err := gradebook.NewStudent("Michael", "Frede")
+	student, err := NewStudent("Michael", "Frede")
 	if err != nil {
 		t.Fatalf("NewStudent() returned error: %v", err)
 	}
 
-	student.GradesByCategory = map[string][]float64{
+	student.gradesByCategory = map[string][]float64{
 		"major": make([]float64, 0),
 	}
 
@@ -323,7 +333,7 @@ func TestStudentAverage(t *testing.T) {
 	}
 
 	grades := []float64{85, 90, 95}
-	student.GradesByCategory["major"] = append(student.GradesByCategory["major"], grades...)
+	student.gradesByCategory["major"] = append(student.gradesByCategory["major"], grades...)
 
 	result = student.Average("major")
 	if !result.Valid {
@@ -339,12 +349,12 @@ func TestStudentAverage(t *testing.T) {
 func TestStudentAverageInvalidCategory(t *testing.T) {
 	t.Parallel()
 
-	student, err := gradebook.NewStudent("Michael", "Frede")
+	student, err := NewStudent("Michael", "Frede")
 	if err != nil {
 		t.Fatalf("NewStudent() returned error: %v", err)
 	}
 
-	student.GradesByCategory = map[string][]float64{
+	student.gradesByCategory = map[string][]float64{
 		"major": make([]float64, 0),
 	}
 }
@@ -352,18 +362,18 @@ func TestStudentAverageInvalidCategory(t *testing.T) {
 func TestStudentTotalAverage(t *testing.T) {
 	t.Parallel()
 
-	student, err := gradebook.NewStudent("Michael", "Frede")
+	student, err := NewStudent("Michael", "Frede")
 	if err != nil {
 		t.Fatalf("NewStudent() returned error: %v", err)
 	}
 
-	student.GradesByCategory = map[string][]float64{
+	student.gradesByCategory = map[string][]float64{
 		"major": make([]float64, 0),
 		"minor": make([]float64, 0),
 		"cp":    make([]float64, 0),
 	}
 
-	weights := gradebook.WeightsByAssignmentCategory{
+	weights := WeightsByAssignmentCategory{
 		"major": 50,
 		"minor": 30,
 		"cp":    20,
@@ -374,9 +384,9 @@ func TestStudentTotalAverage(t *testing.T) {
 		t.Error("TotalAverage() with no grades should return Valid=false")
 	}
 
-	student.GradesByCategory["major"] = append(student.GradesByCategory["major"], 90)
-	student.GradesByCategory["minor"] = append(student.GradesByCategory["minor"], 90)
-	student.GradesByCategory["cp"] = append(student.GradesByCategory["cp"], 90)
+	student.gradesByCategory["major"] = append(student.gradesByCategory["major"], 90)
+	student.gradesByCategory["minor"] = append(student.gradesByCategory["minor"], 90)
+	student.gradesByCategory["cp"] = append(student.gradesByCategory["cp"], 90)
 
 	result = student.TotalAverage(weights)
 	if !result.Valid {
@@ -388,7 +398,7 @@ func TestStudentTotalAverage(t *testing.T) {
 		t.Errorf("TotalAverage() with equal grades = %f; want %f", result.Value, expectedAvg)
 	}
 
-	student.GradesByCategory = map[string][]float64{
+	student.gradesByCategory = map[string][]float64{
 		"major": {94},
 		"minor": {82},
 		"cp":    {75},
@@ -408,12 +418,12 @@ func TestStudentTotalAverage(t *testing.T) {
 func TestStudentTotalAveragePartialGrades(t *testing.T) {
 	t.Parallel()
 
-	student, err := gradebook.NewStudent("Michael", "Frede")
+	student, err := NewStudent("Michael", "Frede")
 	if err != nil {
 		t.Fatalf("NewStudent() returned error: %v", err)
 	}
 
-	student.GradesByCategory = map[string][]float64{
+	student.gradesByCategory = map[string][]float64{
 		"major": {90},
 		"minor": {80},
 		"cp":    make([]float64, 0),
@@ -439,12 +449,12 @@ func TestStudentTotalAveragePartialGrades(t *testing.T) {
 func TestStudentAverageMultipleGrades(t *testing.T) {
 	t.Parallel()
 
-	student, err := gradebook.NewStudent("Michael", "Frede")
+	student, err := NewStudent("Michael", "Frede")
 	if err != nil {
 		t.Fatalf("NewStudent() returned error: %v", err)
 	}
 
-	student.GradesByCategory = map[string][]float64{
+	student.gradesByCategory = map[string][]float64{
 		"major": {88, 92, 85, 95},
 	}
 

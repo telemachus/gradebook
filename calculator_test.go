@@ -1,23 +1,28 @@
-package gradebook_test
+package gradebook
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/telemachus/gradebook"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func TestUnmarshalCalcClass(t *testing.T) {
+func TestParseClassFileForGradesEqualMock(t *testing.T) {
 	t.Parallel()
 
 	want := fakeCalcClass()
-	got, err := gradebook.UnmarshalCalcClass(classJSON)
+	got, err := ParseClassFileForGrades(classJSON)
 	if err != nil {
-		t.Fatalf("gradebook.UnmarshalClass(classJSON) = %v; want nil error", err)
+		t.Fatalf("ParseClassFileForGrades(classJSON) = %v; want nil error", err)
 	}
 
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("gradebook.UnmarshalClass(classJSON) mismatch(-want +got):\n%s", diff)
+	if diff := cmp.Diff(
+		want,
+		got,
+		cmpopts.IgnoreFields(Class{}, "trusted", "domain"),
+		cmp.AllowUnexported(Class{}, Student{}),
+	); diff != "" {
+		t.Errorf("ParseClassFileForGrades(classJSON) mismatch(-want +got):\n%s", diff)
 	}
 }
 

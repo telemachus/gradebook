@@ -1,22 +1,20 @@
-package gradebook_test
+package gradebook
 
 import (
 	"testing"
-
-	"github.com/telemachus/gradebook"
 )
 
 func TestTermIncludesValid(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		term    *gradebook.Term
+		term    *Term
 		dateStr string
 		want    bool
 	}{
 		"term should include start date": {
 			dateStr: "20230907",
-			term: &gradebook.Term{
+			term: &Term{
 				Start: "20230907",
 				End:   "20231011",
 			},
@@ -24,7 +22,7 @@ func TestTermIncludesValid(t *testing.T) {
 		},
 		"term should include end date": {
 			dateStr: "20231011",
-			term: &gradebook.Term{
+			term: &Term{
 				Start: "20230907",
 				End:   "20231011",
 			},
@@ -32,7 +30,7 @@ func TestTermIncludesValid(t *testing.T) {
 		},
 		"term should include a date between start and end": {
 			dateStr: "20230923",
-			term: &gradebook.Term{
+			term: &Term{
 				Start: "20230907",
 				End:   "20231011",
 			},
@@ -40,7 +38,7 @@ func TestTermIncludesValid(t *testing.T) {
 		},
 		"term should exclude a date before start": {
 			dateStr: "20220907",
-			term: &gradebook.Term{
+			term: &Term{
 				Start: "20230907",
 				End:   "20231011",
 			},
@@ -48,7 +46,7 @@ func TestTermIncludesValid(t *testing.T) {
 		},
 		"term should exclude a date after end": {
 			dateStr: "20231207",
-			term: &gradebook.Term{
+			term: &Term{
 				Start: "20230907",
 				End:   "20231011",
 			},
@@ -68,30 +66,30 @@ func TestTermIncludesValid(t *testing.T) {
 	}
 }
 
-func testTerm(start, end string) *gradebook.Term {
-	return &gradebook.Term{
+func testTerm(start, end string) *Term {
+	return &Term{
 		Start: start,
 		End:   end,
 	}
 }
 
-func loadGradesForTerm(t *testing.T, term *gradebook.Term) *gradebook.Student {
+func loadGradesForTerm(t *testing.T, term *Term) *Student {
 	t.Helper()
 
-	class, err := gradebook.UnmarshalCalcClass("testdata/class.json")
+	class, err := ParseClassFileForGrades("testdata/class.json")
 	if err != nil {
-		t.Fatalf("failed to unmarshal class: %v", err)
+		t.Fatalf("failed to parse class: %v", err)
 	}
 
 	if err := class.LoadGrades("testdata/term", term); err != nil {
 		t.Fatalf("LoadGrades failed: %v", err)
 	}
 
-	return class.StudentsByEmail["gstriker@school.edu"]
+	return class.studentsByEmail["gstriker@school.edu"]
 }
 
 var loadGradesWithTermFilterCases = map[string]struct {
-	term             *gradebook.Term
+	term             *Term
 	expectMinorGrade bool
 }{
 	"loads grades within term": {
@@ -116,7 +114,7 @@ func TestLoadGradesWithTermFilter(t *testing.T) {
 			t.Parallel()
 
 			student := loadGradesForTerm(t, tt.term)
-			hasMinorGrade := len(student.GradesByCategory["minor"]) > 0
+			hasMinorGrade := len(student.gradesByCategory["minor"]) > 0
 			if hasMinorGrade != tt.expectMinorGrade {
 				t.Errorf("minor-grade presence = %t; want %t", hasMinorGrade, tt.expectMinorGrade)
 			}
@@ -188,7 +186,7 @@ func TestLoadGradesTermBoundaries(t *testing.T) {
 			t.Parallel()
 
 			student := loadGradesForTerm(t, testTerm(tt.termStart, tt.termEnd))
-			hasGrade := len(student.GradesByCategory[tt.expectedCategory]) > 0
+			hasGrade := len(student.gradesByCategory[tt.expectedCategory]) > 0
 
 			if tt.shouldLoad && !hasGrade {
 				t.Errorf("expected grades in %s for term %s to %s", tt.expectedCategory, tt.termStart, tt.termEnd)

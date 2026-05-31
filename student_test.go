@@ -1,9 +1,7 @@
-package gradebook_test
+package gradebook
 
 import (
 	"testing"
-
-	"github.com/telemachus/gradebook"
 )
 
 func TestNewStudentValid(t *testing.T) {
@@ -11,8 +9,8 @@ func TestNewStudentValid(t *testing.T) {
 
 	firstName := "First"
 	lastName := "Last"
-	_, err := gradebook.NewStudent(firstName, lastName)
+	_, err := NewStudent(firstName, lastName)
 	if err != nil {
-		t.Errorf("gradebook.NewStudent(y, z) = %v; want no error", err)
+		t.Errorf("NewStudent(y, z) = %v; want no error", err)
 	}
 }
