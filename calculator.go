@@ -1,7 +1,7 @@
 package gradebook
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,7 +35,7 @@ func parseClassFileWithInit(classFile string, mode classInitMode) (*Class, error
 	}
 
 	var spec ClassSpec
-	err = json.Unmarshal(data, &spec)
+	err = json.Unmarshal(data, &spec, json.DefaultOptionsV2())
 	if err != nil {
 		return nil, fmt.Errorf("gradebook: unmarshal class file %q: %w", classFile, err)
 	}

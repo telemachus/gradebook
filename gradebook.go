@@ -2,7 +2,7 @@
 package gradebook
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"maps"
 	"os"
@@ -19,8 +19,8 @@ const (
 
 // Term represents a grading period (e.g., a quarter or semester).
 type Term struct {
-	Start string
-	End   string
+	Start string `json:"start"`
+	End   string `json:"end"`
 }
 
 // TermsByID maps Terms by short ID (e.g., "q1" points to the first quarter).
@@ -194,7 +194,7 @@ func ParseGradebookFile(gradebookFile string) (*Gradebook, error) {
 	}
 
 	var gradebook Gradebook
-	err = json.Unmarshal(data, &gradebook)
+	err = json.Unmarshal(data, &gradebook, json.DefaultOptionsV2())
 	if err != nil {
 		return nil, fmt.Errorf("gradebook: unmarshal gradebook file %q: %w", gradebookFile, err)
 	}

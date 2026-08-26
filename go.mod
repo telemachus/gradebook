@@ -1,5 +1,5 @@
 module github.com/telemachus/gradebook
 
-go 1.25
+go 1.27
 
 require github.com/google/go-cmp v0.7.0
